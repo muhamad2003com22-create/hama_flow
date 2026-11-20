@@ -193,7 +193,33 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, codes);
       }
       if (method === 'POST') {
-        const { code, label, mode } = await parseJsonBody(req);
+        const body = await parseJsonBody(req);
+
+        // Bulk codes support
+        if (Array.isArray(body.codes) && body.codes.length > 0) {
+          const addedCodes = [];
+          const now = new Date().toISOString();
+          for (const item of body.codes) {
+            const rawCode = typeof item === 'string' ? item : item.code;
+            const clean = (rawCode || '').trim().toUpperCase();
+            if (clean && !codes.some(c => c.code === clean)) {
+              const newObj = {
+                code: clean,
+                label: (typeof item === 'object' && item.label) ? item.label.trim() : (body.label || 'کۆدی ژوور'),
+                mode: (typeof item === 'object' && item.mode) ? item.mode : (body.mode || 'custom'),
+                active: true,
+                createdAt: now,
+                usedCount: 0
+              };
+              codes.unshift(newObj);
+              addedCodes.push(newObj);
+            }
+          }
+          writeJson('codes.json', codes);
+          return sendJson(res, 201, { success: true, count: addedCodes.length, codes: addedCodes });
+        }
+
+        const { code, label, mode } = body;
         if (!code || !code.trim()) return sendError(res, 400, 'کۆد پێویستە بنووسرێت');
         const cleanCode = code.trim().toUpperCase();
         if (codes.some(c => c.code === cleanCode)) {
@@ -211,6 +237,13 @@ const server = http.createServer(async (req, res) => {
         writeJson('codes.json', codes);
         return sendJson(res, 201, { success: true, code: newCodeObj });
       }
+    }
+
+    // Clear all codes
+    if (pathname === '/api/admin/codes/clear-all' && method === 'DELETE') {
+      if (!isAdmin(req)) return sendError(res, 401, 'دەسەڵاتی ئەدمین پێویستە');
+      writeJson('codes.json', []);
+      return sendJson(res, 200, { success: true, message: 'تەواوی کۆدەکان سڕانەوە' });
     }
 
     // Toggle / Delete specific code

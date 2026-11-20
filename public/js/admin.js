@@ -44,6 +44,90 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnGenRandomCode = document.getElementById('btnGenRandomCode');
   const filterCodesInput = document.getElementById('filterCodesInput');
   const codesTableBody = document.getElementById('codesTableBody');
+  const bulkCodeForm = document.getElementById('bulkCodeForm');
+  const bulkCountSelect = document.getElementById('bulkCountSelect');
+  const bulkPrefixSelect = document.getElementById('bulkPrefixSelect');
+  const bulkLabelInput = document.getElementById('bulkLabelInput');
+  const btnCopyAllCodes = document.getElementById('btnCopyAllCodes');
+  const btnClearAllCodes = document.getElementById('btnClearAllCodes');
+  const codesCountBadge = document.getElementById('codesCountBadge');
+
+  // Supabase Database Elements
+  const supabaseConfigForm = document.getElementById('supabaseConfigForm');
+  const supabaseUrlInput = document.getElementById('supabaseUrlInput');
+  const supabaseKeyInput = document.getElementById('supabaseKeyInput');
+  const supabaseStatusBadge = document.getElementById('supabaseStatusBadge');
+  const btnTestSupabase = document.getElementById('btnTestSupabase');
+  const btnCopySqlSetup = document.getElementById('btnCopySqlSetup');
+
+  const SQL_SETUP_TEXT = `-- ========================================================
+-- Supabase Schema for hama.flow Live Game Platform
+-- ========================================================
+
+-- 1. Codes Table (کۆدەکانی ژوور و یاری)
+CREATE TABLE IF NOT EXISTS public.codes (
+    code TEXT PRIMARY KEY,
+    label TEXT DEFAULT 'کۆدی ژوور',
+    mode TEXT DEFAULT 'custom',
+    active BOOLEAN DEFAULT true,
+    used_count INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. Levels Table (ئاست و قۆناغە دروستکراوەکان)
+CREATE TABLE IF NOT EXISTS public.levels (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    difficulty TEXT DEFAULT 'custom',
+    size INTEGER DEFAULT 7,
+    dots JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. Submissions Table (ئەنجامەکان و کێ یەکەم بوو)
+CREATE TABLE IF NOT EXISTS public.submissions (
+    id TEXT PRIMARY KEY,
+    player_name TEXT NOT NULL,
+    code_used TEXT NOT NULL,
+    level_id TEXT NOT NULL,
+    level_name TEXT,
+    grid_size INTEGER DEFAULT 7,
+    moves INTEGER DEFAULT 0,
+    time_seconds INTEGER DEFAULT 0,
+    pipe_coverage INTEGER DEFAULT 100,
+    is_first BOOLEAN DEFAULT false,
+    rank INTEGER DEFAULT 1,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 4. Settings Table (ڕێکخستنەکانی سیستەم و ڕاگەیاندن)
+CREATE TABLE IF NOT EXISTS public.settings (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL
+);
+
+-- Row Level Security (RLS)
+ALTER TABLE public.codes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.levels ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.submissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read/write codes" ON public.codes FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write levels" ON public.levels FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write submissions" ON public.submissions FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read/write settings" ON public.settings FOR ALL USING (true) WITH CHECK (true);
+
+-- دانانی کۆدە سەرەتاییە هەمیشەییەکان
+INSERT INTO public.codes (code, label, mode, active)
+VALUES 
+    ('FLOW2026', 'کۆدی سەرەکی پلاتفۆرم', 'all', true),
+    ('HAMA', 'کۆدی سەرەکی حەمە', 'all', true)
+ON CONFLICT (code) DO NOTHING;
+
+-- چالاککردنی پەخشی ڕاستەوخۆ (Realtime)
+ALTER PUBLICATION supabase_realtime ADD TABLE public.codes;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.submissions;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.levels;`;
 
   // Builder
   const builderGridSize = document.getElementById('builderGridSize');
@@ -131,14 +215,66 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function updateSupabaseUI() {
+    if (!supabaseStatusBadge) return;
+    const cfg = window.SUPABASE_CONFIG || {};
+    const url = localStorage.getItem('flow_supabase_url') || cfg.url || '';
+    const key = localStorage.getItem('flow_supabase_key') || cfg.anonKey || '';
+
+    if (supabaseUrlInput) supabaseUrlInput.value = url;
+    if (supabaseKeyInput) supabaseKeyInput.value = key;
+
+    if (!url || !key) {
+      supabaseStatusBadge.textContent = '⚪ داتابەیسی ناوخۆیی (کۆدەکان تەنها لەم ئامێرە کار دەکەن)';
+      supabaseStatusBadge.style.background = '#374151';
+      supabaseStatusBadge.style.color = '#9ca3af';
+      return;
+    }
+
+    supabaseStatusBadge.textContent = '⏳ پشکنینی پەیوەندی بە Supabase...';
+    supabaseStatusBadge.style.background = '#854d0e';
+    supabaseStatusBadge.style.color = '#fef08a';
+
+    const res = await API.testSupabaseConnection();
+    if (res.success) {
+      supabaseStatusBadge.textContent = '🟢 پەیوەستە بە Supabase (ڕاستەوخۆ بۆ هەموو مۆبایلەکان)';
+      supabaseStatusBadge.style.background = '#065f46';
+      supabaseStatusBadge.style.color = '#6ee7b7';
+    } else {
+      supabaseStatusBadge.textContent = '🔴 کێشە لە پەیوەندی بە Supabase';
+      supabaseStatusBadge.style.background = '#7f1d1d';
+      supabaseStatusBadge.style.color = '#fca5a5';
+    }
+  }
+
   function showDashboard() {
     adminLoginSection.style.display = 'none';
     adminDashboardSection.style.display = 'block';
     btnAdminLogout.style.display = 'inline-flex';
 
+    updateSupabaseUI();
     loadAllAdminData();
     initBuilderGrid();
     loadCustomLevelsList();
+
+    // Setup Supabase Realtime Live Submissions listener
+    if (!window._sbLiveSubscribed) {
+      window._sbLiveSubscribed = true;
+      API.subscribeLiveSubmissions((newSub) => {
+        // Prepend to submissions table in real-time without reloading
+        const exists = loadedSubmissions.some(s => s.id === newSub.id);
+        if (!exists) {
+          loadedSubmissions.unshift(newSub);
+          renderSubmissionsTable(loadedSubmissions);
+          loadStats();
+          if (newSub.isFirst) {
+            showToast(`👑 پیرۆزە! ${newSub.playerName} یەکەم بوو بە کاتی ${formatTime(newSub.timeSeconds)}!`, 6000);
+          } else {
+            showToast(`🏆 یاریزانی نوێ: ${newSub.playerName} کات: ${formatTime(newSub.timeSeconds)}`, 3500);
+          }
+        }
+      });
+    }
   }
 
   // Refresh
@@ -245,13 +381,131 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 3. Codes Management
+  // Supabase Configuration Form Events
+  if (supabaseConfigForm) {
+    supabaseConfigForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url = (supabaseUrlInput ? supabaseUrlInput.value : '').trim();
+      const key = (supabaseKeyInput ? supabaseKeyInput.value : '').trim();
+      API.setSupabaseConfig(url, key);
+      showToast('زانیارییەکانی Supabase پاشەکەوت کران!');
+      await updateSupabaseUI();
+      loadAllAdminData();
+    });
+  }
+
+  if (btnTestSupabase) {
+    btnTestSupabase.addEventListener('click', async () => {
+      const url = (supabaseUrlInput ? supabaseUrlInput.value : '').trim();
+      const key = (supabaseKeyInput ? supabaseKeyInput.value : '').trim();
+      API.setSupabaseConfig(url, key);
+      const res = await API.testSupabaseConnection();
+      showToast(res.message);
+      await updateSupabaseUI();
+    });
+  }
+
+  if (btnCopySqlSetup) {
+    btnCopySqlSetup.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(SQL_SETUP_TEXT);
+        showToast('📋 تەواوی کۆدی SQL کۆپی کرا! لە Supabase SQL Editor دایبنێ و Run لێبدە.');
+      } catch (err) {
+        showToast('تکایە فایلی supabase_setup.sql لە فۆڵدەرەکە بکەرەوە و کۆدی ناوەوەی کۆپی بکە');
+      }
+    });
+  }
+
+  // 3. Codes Management Helper
+  function generateRandomRoomCode(prefix = 'MIX') {
+    const prefixes = ['ROOM', 'HAMA', 'VIP', 'FLOW', 'GAME', 'SMART'];
+    const p = prefix === 'MIX' ? prefixes[Math.floor(Math.random() * prefixes.length)] : prefix;
+    const num = Math.floor(1000 + Math.random() * 9000);
+    return `${p}-${num}`;
+  }
+
   if (btnGenRandomCode) {
     btnGenRandomCode.addEventListener('click', () => {
-      const prefixes = ['FLOW', 'VIP', 'CHALLENGE', 'PUZZLE', 'SMART'];
-      const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-      const num = Math.floor(1000 + Math.random() * 9000);
-      newCodeText.value = `${prefix}-${num}`;
+      newCodeText.value = generateRandomRoomCode('MIX');
+    });
+  }
+
+  // Bulk Code Generation
+  if (bulkCodeForm) {
+    bulkCodeForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const count = parseInt(bulkCountSelect.value, 10) || 10;
+      const prefix = bulkPrefixSelect.value || 'MIX';
+      const label = (bulkLabelInput.value.trim()) || `ژووری پێشبڕکێ (${prefix})`;
+
+      const generated = new Set();
+      const existing = new Set((loadedCodes || []).map(c => c.code.toUpperCase()));
+
+      let safety = 0;
+      while (generated.size < count && safety < count * 20) {
+        safety++;
+        const c = generateRandomRoomCode(prefix);
+        if (!existing.has(c)) {
+          generated.add(c);
+        }
+      }
+
+      const codesArray = Array.from(generated).map(code => ({
+        code,
+        label,
+        mode: 'custom'
+      }));
+
+      try {
+        const res = await API.createBulkAdminCodes(codesArray, { label, mode: 'custom' });
+        showToast(`🎉 ${res.count || codesArray.length} کۆدی نوێی هەڕەمەکی بە سەرکەوتوویی دروستکران!`);
+        bulkLabelInput.value = '';
+        loadCodes();
+        loadStats();
+      } catch (err) {
+        showToast(err.message || 'هەڵەیەک ڕوویدا لە دروستکردنی کۆدەکان');
+      }
+    });
+  }
+
+  // Copy All Codes
+  if (btnCopyAllCodes) {
+    btnCopyAllCodes.addEventListener('click', () => {
+      if (!loadedCodes || loadedCodes.length === 0) {
+        showToast('هیچ کۆدێک نییە بۆ کۆپیکردن');
+        return;
+      }
+      const activeCodes = loadedCodes.filter(c => c.active !== false).map((c, i) => `${i + 1}. ${c.code} (${c.label || 'کۆدی ژوور'})`);
+      const gameUrl = window.location.origin + window.location.pathname.replace('admin.html', 'index.html');
+      const textToCopy = `🎮 کۆدەکانی ژووری یاری hama.flow:\n` +
+        activeCodes.join('\n') +
+        `\n\n🌐 لینکی چوونەژوورەوەی یاری:\n${gameUrl}`;
+
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        showToast(`📋 هەموو کۆدەکان (${activeCodes.length} کۆد) کۆپیکران بۆ کلیپبۆرد!`);
+      }).catch(() => {
+        prompt('کۆدەکان کۆپی بکە:', activeCodes.join(', '));
+      });
+    });
+  }
+
+  // Clear All Codes
+  if (btnClearAllCodes) {
+    btnClearAllCodes.addEventListener('click', async () => {
+      if (!loadedCodes || loadedCodes.length === 0) {
+        showToast('هیچ کۆدێک نییە بۆ سڕینەوە');
+        return;
+      }
+      if (confirm(`⚠️ دڵنیایت لە سڕینەوەی هەموو کۆدەکان (${loadedCodes.length} کۆد)؟ ئەم کردارە ناگەڕێتەوە!`)) {
+        try {
+          await API.clearAllAdminCodes();
+          showToast('تەواوی کۆدەکان بە سەرکەوتوویی سڕانەوە!');
+          loadCodes();
+          loadStats();
+        } catch (err) {
+          showToast(err.message || 'هەڵەیەک ڕوویدا');
+        }
+      }
     });
   }
 
@@ -280,6 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderCodesTable(codes) {
     codesTableBody.innerHTML = '';
+    if (codesCountBadge) codesCountBadge.textContent = codes ? codes.length : 0;
     if (!codes || codes.length === 0) {
       codesTableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">هیچ کۆدێک نەدۆزرایەوە</td></tr>';
       return;

@@ -132,6 +132,53 @@
           </div>
         </div>
 
+        <!-- Supabase Cloud Database Configuration Card -->
+        <div class="panel-card" style="border: 1px solid #3b82f6; background: rgba(59, 130, 246, 0.05); margin-bottom: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <h3 style="margin: 0; color: #60a5fa; display: flex; align-items: center; gap: 8px;">
+              ⚡ ڕێکخستنی داتابەیسی هەوری (Supabase Cloud Database)
+            </h3>
+            <span id="supabaseStatusBadge" style="padding: 5px 14px; border-radius: 999px; font-size: 0.82rem; font-weight: 700; background: #374151; color: #9ca3af;">
+              ⚪ پشکنینی دۆخ...
+            </span>
+          </div>
+
+          <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 16px; line-height: 1.6;">
+            بۆ ئەوەی یارییەکە و کۆدەکان لەسەر هەر هۆستێک بێت (وەک GitHub Pages یان Vercel) ڕاستەوخۆ بگاتە دەستی هەموو بینەران لە مۆبایلەکانیان لە کاتی لایڤدا:
+          </p>
+
+          <form id="supabaseConfigForm" style="display: grid; gap: 14px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="supabaseUrlInput">🔗 بەستەری پڕۆژە (Project URL):</label>
+              <input type="text" id="supabaseUrlInput" class="form-input" placeholder="https://xxxxxxxxxxxx.supabase.co" dir="ltr" style="text-align: left;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="supabaseKeyInput">🔑 کلیلی گشتی (Project Anon Key):</label>
+              <input type="password" id="supabaseKeyInput" class="form-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." dir="ltr" style="text-align: left;">
+            </div>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 6px;">
+              <button type="submit" class="btn btn-primary" id="btnSaveSupabase">
+                💾 پاشەکەوتکردن و پەیوەستکردن
+              </button>
+              <button type="button" class="btn btn-secondary" id="btnTestSupabase">
+                🔄 پشکنینی پەیوەندی
+              </button>
+              <button type="button" class="btn btn-secondary" id="btnCopySqlSetup" style="background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399;">
+                📋 کۆپیکردنی کۆدی SQL
+              </button>
+            </div>
+          </form>
+
+          <div style="margin-top: 14px; padding: 12px; background: rgba(0, 0, 0, 0.25); border-radius: 8px; font-size: 0.82rem; color: #94a3b8; line-height: 1.8;">
+            <strong>📌 ڕێنمایی خێرا:</strong><br>
+            ١. لە <a href="https://supabase.com" target="_blank" style="color: #60a5fa; text-decoration: underline;">supabase.com</a> پڕۆژەیەک بە خۆڕایی دروست بکە.<br>
+            ٢. لە بەشی چەپ بڕۆ بۆ <strong>SQL Editor</strong>، دوگمەی سەوزی <strong>📋 کۆپیکردنی کۆدی SQL</strong> دابگرە، لەوێ Paste بکە و <strong>Run</strong> لێبدە.<br>
+            ٣. لە <strong>Project Settings &gt; API</strong> بەستەری URL و کلیلی Anon کۆپی بکە و لێرە دابنێ!
+          </div>
+        </div>
+
         <!-- Mode & Difficulty (Custom Dedicated) -->
         <div class="panel-card">
           <h3>🎮 دۆخی یاری بۆ بەکارهێنەران</h3>
@@ -228,10 +275,72 @@
           </form>
         </div>
 
+        <!-- Bulk Room Codes Generator (New Feature) -->
+        <div class="panel-card" style="background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(76, 29, 149, 0.25)); border: 1px solid rgba(168, 85, 247, 0.4);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <h3 style="color: #c084fc; display: flex; align-items: center; gap: 8px;">
+              ⚡ دروستکردنی ژمارەیەکی زۆر کۆدی هەڕەمەکی (Bulk Codes Generator)
+            </h3>
+            <span class="custom-mode-badge" style="background: rgba(168, 85, 247, 0.2); color: #e9d5ff;">
+              🎲 دروستکردنی خێرای چەندین کۆدی جۆراوجۆر
+            </span>
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 16px; line-height: 1.6;">
+            دەتوانیت بە یەک کلیک ٥ تا ١٠٠ کۆدی ژووری هەڕەمەکی و جیاواز دروست بکەیت بۆ بەشداربووان:
+          </p>
+
+          <form id="bulkCodeForm">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) 200px; gap: 12px; align-items: flex-end;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="bulkCountSelect">چەند کۆد دروست بکرێت؟</label>
+                <select id="bulkCountSelect" class="form-input">
+                  <option value="5">٥ کۆدی هەڕەمەکی (5 Codes)</option>
+                  <option value="10" selected>١٠ کۆدی هەڕەمەکی (10 Codes)</option>
+                  <option value="20">٢٠ کۆدی هەڕەمەکی (20 Codes)</option>
+                  <option value="50">٥٠ کۆدی هەڕەمەکی (50 Codes)</option>
+                  <option value="100">١٠٠ کۆدی هەڕەمەکی (100 Codes)</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="bulkPrefixSelect">شێوازی پێشگری کۆدەکان:</label>
+                <select id="bulkPrefixSelect" class="form-input">
+                  <option value="MIX" selected>🎲 تێکەڵاو (ROOM / HAMA / VIP / FLOW)</option>
+                  <option value="ROOM">ROOM-XXXX (ژووری یاری)</option>
+                  <option value="HAMA">HAMA-XXXX (کۆدی حەمە)</option>
+                  <option value="VIP">VIP-XXXX (کۆدی تایبەت)</option>
+                  <option value="FLOW">FLOW-XXXX (کۆدی فڵۆو)</option>
+                  <option value="GAME">GAME-XXXX (کۆدی یاری)</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="bulkLabelInput">وەسف / ناوی پێشبڕکێ:</label>
+                <input type="text" id="bulkLabelInput" class="form-input" placeholder="وەک: پێشبڕکێی ئۆنلاین">
+              </div>
+
+              <button type="submit" id="btnGenerateBulkCodes" class="btn btn-primary" style="height: 48px; background: linear-gradient(135deg, #a855f7, #6366f1); border: 1px solid #c084fc; box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); font-weight: 800;">
+                🎲 دروستکردنی هەمووی ئێستا
+              </button>
+            </div>
+          </form>
+        </div>
+
         <div class="panel-card">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
-            <h3>📋 لیستی کۆدە چالاکەکان</h3>
-            <input type="text" id="filterCodesInput" class="form-input search-input-box" placeholder="🔍 گەڕان بەپێی کۆد یان ناوی گرووپ...">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h3>📋 لیستی کۆدە چالاکەکان</h3>
+              <span id="codesCountBadge" style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 700;">0</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <input type="text" id="filterCodesInput" class="form-input search-input-box" placeholder="🔍 گەڕان بەپێی کۆد...">
+              <button id="btnCopyAllCodes" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem;" title="کۆپیکردنی هەموو کۆدەکان پێکەوە">
+                📋 کۆپیکردنی هەمووی
+              </button>
+              <button id="btnClearAllCodes" class="btn btn-danger" style="padding: 6px 12px; font-size: 0.82rem;" title="سڕینەوەی هەموو کۆدەکان">
+                🗑️ سڕینەوەی هەمووی
+              </button>
+            </div>
           </div>
 
           <div class="table-responsive">
@@ -471,8 +580,10 @@
   </footer>
 
   <!-- Scripts -->
-  <script src="js/levels.js?v=12"></script>
-  <script src="js/api.js?v=12"></script>
-  <script src="js/admin.js?v=12"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js?v=15"></script>
+  <script src="js/levels.js?v=15"></script>
+  <script src="js/api.js?v=15"></script>
+  <script src="js/admin.js?v=15"></script>
 </body>
 </html>
