@@ -139,6 +139,21 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.levels;`;
   const builderStatusText = document.getElementById('builderStatusText');
   const customLevelsTableBody = document.getElementById('customLevelsTableBody');
 
+  // Builder Instant Code & Hub Elements
+  const builderAutoCreateCode = document.getElementById('builderAutoCreateCode');
+  const builderCustomCodeInput = document.getElementById('builderCustomCodeInput');
+  const btnBuilderRandomCode = document.getElementById('btnBuilderRandomCode');
+  const builderActiveCodesContainer = document.getElementById('builderActiveCodesContainer');
+  const btnBuilderCopyAllCodes = document.getElementById('btnBuilderCopyAllCodes');
+  const btnBuilderQuickBulk10 = document.getElementById('btnBuilderQuickBulk10');
+
+  // Success Modal Elements
+  const builderSuccessModal = document.getElementById('builderSuccessModal');
+  const modalGeneratedCodeText = document.getElementById('modalGeneratedCodeText');
+  const modalLevelNameText = document.getElementById('modalLevelNameText');
+  const btnModalCopyCode = document.getElementById('btnModalCopyCode');
+  const btnModalClose = document.getElementById('btnModalClose');
+
   // Submissions
   const submissionsTableBody = document.getElementById('submissionsTableBody');
   const btnClearSubmissions = document.getElementById('btnClearSubmissions');
@@ -513,6 +528,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.levels;`;
     try {
       loadedCodes = await API.getAdminCodes();
       renderCodesTable(loadedCodes);
+      renderBuilderActiveCodes();
     } catch (e) {
       console.warn('Error loading codes:', e);
     }
@@ -765,16 +781,150 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.levels;`;
         difficulty: difficulty,
         dots: validDots
       });
-      showToast('یارییە تایبەتەکە بە سەرکەوتوویی پاشەکەوت کرا! لە بەشی یاری زیاد بوو.');
+
+      let createdCode = null;
+      if (builderAutoCreateCode && builderAutoCreateCode.checked) {
+        let codeText = (builderCustomCodeInput ? builderCustomCodeInput.value : '').trim().toUpperCase();
+        if (!codeText) {
+          const rand = Math.floor(100 + Math.random() * 900);
+          codeText = `ROOM${rand}`;
+        }
+        try {
+          await API.createAdminCode({
+            code: codeText,
+            label: `یاری: ${name}`,
+            mode: 'custom'
+          });
+          createdCode = codeText;
+        } catch (cErr) {
+          console.warn("Auto-create code warning:", cErr);
+        }
+      }
+
       builderCells = {};
       builderLevelName.value = '';
+      if (builderCustomCodeInput) builderCustomCodeInput.value = '';
       renderBuilderGrid();
-      loadStats();
-      loadCustomLevelsList();
+      await loadStats();
+      await loadCodes();
+      await loadCustomLevelsList();
+      renderBuilderActiveCodes();
+
+      if (createdCode && builderSuccessModal) {
+        modalGeneratedCodeText.textContent = createdCode;
+        modalLevelNameText.textContent = `${name} (${currentBuilderSize}×${currentBuilderSize})`;
+        builderSuccessModal.style.display = 'flex';
+      } else {
+        showToast('یارییە تایبەتەکە بە سەرکەوتوویی پاشەکەوت کرا!');
+      }
     } catch (err) {
       showToast(err.message || 'هەڵەیەک ڕوویدا لە کاتی پاشەکەوتکردن');
     }
   });
+
+  // Modal Actions
+  if (btnModalCopyCode) {
+    btnModalCopyCode.addEventListener('click', async () => {
+      const code = (modalGeneratedCodeText.textContent || '').trim();
+      try {
+        await navigator.clipboard.writeText(code);
+        showToast(`📋 کۆدی ${code} کۆپی کرا بۆ لایڤ!`);
+      } catch (e) {
+        showToast(`کۆد: ${code}`);
+      }
+    });
+  }
+
+  if (btnModalClose) {
+    btnModalClose.addEventListener('click', () => {
+      if (builderSuccessModal) builderSuccessModal.style.display = 'none';
+    });
+  }
+
+  if (builderSuccessModal) {
+    builderSuccessModal.addEventListener('click', (e) => {
+      if (e.target === builderSuccessModal) {
+        builderSuccessModal.style.display = 'none';
+      }
+    });
+  }
+
+  if (btnBuilderRandomCode) {
+    btnBuilderRandomCode.addEventListener('click', () => {
+      const prefixes = ['ROOM', 'HAMA', 'FLOW', 'LIVE', 'VIP'];
+      const p = prefixes[Math.floor(Math.random() * prefixes.length)];
+      const num = Math.floor(100 + Math.random() * 900);
+      if (builderCustomCodeInput) {
+        builderCustomCodeInput.value = `${p}${num}`;
+      }
+    });
+  }
+
+  // Builder Quick Codes Hub
+  function renderBuilderActiveCodes() {
+    if (!builderActiveCodesContainer) return;
+    builderActiveCodesContainer.innerHTML = '';
+    const active = (loadedCodes || []).filter(c => c.active !== false);
+    if (active.length === 0) {
+      builderActiveCodesContainer.innerHTML = '<span style="color:var(--text-muted); font-size:0.85rem;">هیچ کۆدێکی چالاک نییە. لەسەرەوە کاتی دروستکردنی یاری کۆدی نوێ دروست دەبێت.</span>';
+      return;
+    }
+    active.forEach(c => {
+      const chip = document.createElement('div');
+      chip.style.cssText = 'background: #1e293b; border: 1px solid #334155; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; font-family: monospace; font-size: 0.95rem; font-weight: 700; color: #38bdf8; cursor: pointer; transition: 0.2s;';
+      chip.title = 'کلیک بکە بۆ کۆپیکردن';
+      chip.innerHTML = `<span>${c.code}</span> <span style="font-size:0.75rem; color:#94a3b8; font-family:sans-serif; font-weight:normal;">(${c.usedCount || 0} یاری)</span> <span style="font-size:0.8rem;">📋</span>`;
+      chip.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(c.code);
+          showToast(`کۆدی ${c.code} کۆپی کرا!`);
+        } catch(e) {}
+      });
+      builderActiveCodesContainer.appendChild(chip);
+    });
+  }
+
+  if (btnBuilderCopyAllCodes) {
+    btnBuilderCopyAllCodes.addEventListener('click', async () => {
+      const active = (loadedCodes || []).filter(c => c.active !== false).map(c => c.code);
+      if (active.length === 0) {
+        showToast('هیچ کۆدێکی چالاک نییە بۆ کۆپیکردن');
+        return;
+      }
+      const text = active.join('\n');
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast(`📋 هەموو کۆدەکان (${active.length} کۆد) کۆپی کران!`);
+      } catch (err) {
+        showToast('نەتوانرا کۆپی بکرێت');
+      }
+    });
+  }
+
+  if (btnBuilderQuickBulk10) {
+    btnBuilderQuickBulk10.addEventListener('click', async () => {
+      const codes = [];
+      const prefixes = ['ROOM', 'HAMA', 'LIVE', 'FLOW'];
+      for (let i = 0; i < 10; i++) {
+        const p = prefixes[Math.floor(Math.random() * prefixes.length)];
+        const num = Math.floor(100 + Math.random() * 900);
+        codes.push({
+          code: `${p}${num}`,
+          label: 'کۆدی خێرای لایڤ',
+          mode: 'custom'
+        });
+      }
+      try {
+        await API.createBulkAdminCodes(codes);
+        showToast('🎉 ١٠ کۆدی نوێی لایڤ دەستبەجێ دروستکران!');
+        await loadCodes();
+        await loadStats();
+        renderBuilderActiveCodes();
+      } catch(err) {
+        showToast(err.message || 'هەڵە لە دروستکردن');
+      }
+    });
+  }
 
   async function loadCustomLevelsList() {
     if (!customLevelsTableBody) return;
@@ -783,25 +933,73 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.levels;`;
       const custom = levels.custom || [];
       customLevelsTableBody.innerHTML = '';
       if (custom.length === 0) {
-        customLevelsTableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">هێشتا هیچ یارییەکی دەستکاری دروست نەکراوە</td></tr>';
+        customLevelsTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding: 16px;">هێشتا هیچ یارییەکی دەستکاری دروست نەکراوە</td></tr>';
         return;
       }
       custom.forEach(lvl => {
         const tr = document.createElement('tr');
         const dateStr = lvl.createdAt ? new Date(lvl.createdAt).toLocaleDateString('ku') : '-';
+        
+        // Find matching codes for this level if any
+        const matchingCodes = (loadedCodes || []).filter(c => c.label && c.label.includes(lvl.name));
+        let codeBadgeHtml = '';
+        if (matchingCodes.length > 0) {
+          codeBadgeHtml = matchingCodes.map(c => `
+            <span style="background:rgba(59,130,246,0.18); border:1px solid #3b82f6; color:#93c5fd; padding:3px 8px; border-radius:6px; font-family:monospace; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; margin:2px;" title="کلیک بکە بۆ کۆپیکردن" class="btn-copy-code-inline" data-code="${c.code}">
+              ${c.code} 📋
+            </span>
+          `).join('');
+        } else {
+          codeBadgeHtml = `<button class="btn btn-secondary btn-create-code-for-level" data-name="${lvl.name}" style="padding:3px 8px; font-size:0.75rem;">🎲 دروستکردنی کۆد</button>`;
+        }
+
         tr.innerHTML = `
           <td><strong>${lvl.name}</strong></td>
           <td>${lvl.size}×${lvl.size}</td>
           <td>${lvl.difficulty || 'medium'}</td>
           <td>${lvl.dots?.length || 0} جووت</td>
+          <td>${codeBadgeHtml}</td>
           <td style="font-size:0.8rem; color:var(--text-muted);">${dateStr}</td>
           <td>
-            <button class="btn btn-danger btn-delete-custom-lvl" data-id="${lvl.id}" style="padding:3px 8px; font-size:0.8rem;">
-              سڕینەوە
+            <button class="btn btn-danger btn-delete-custom-lvl" data-id="${lvl.id}" style="padding:4px 10px; font-size:0.8rem;">
+              🗑️ سڕینەوە
             </button>
           </td>
         `;
         customLevelsTableBody.appendChild(tr);
+      });
+
+      // Inline Copy Code
+      customLevelsTableBody.querySelectorAll('.btn-copy-code-inline').forEach(el => {
+        el.addEventListener('click', async () => {
+          const c = el.dataset.code;
+          try {
+            await navigator.clipboard.writeText(c);
+            showToast(`📋 کۆدی ${c} کۆپی کرا!`);
+          } catch(e){}
+        });
+      });
+
+      // Quick Code creation for level
+      customLevelsTableBody.querySelectorAll('.btn-create-code-for-level').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const lvlName = btn.dataset.name;
+          const num = Math.floor(100 + Math.random() * 900);
+          const newCode = `ROOM${num}`;
+          try {
+            await API.createAdminCode({
+              code: newCode,
+              label: `یاری: ${lvlName}`,
+              mode: 'custom'
+            });
+            showToast(`کۆدی ${newCode} دروستکرا بۆ ${lvlName}!`);
+            await loadCodes();
+            await loadCustomLevelsList();
+            renderBuilderActiveCodes();
+          } catch (err) {
+            showToast(err.message || 'هەڵە لە دروستکردنی کۆد');
+          }
+        });
       });
 
       customLevelsTableBody.querySelectorAll('.btn-delete-custom-lvl').forEach(b => {

@@ -422,9 +422,28 @@
             </div>
           </div>
 
+          <!-- Instant Room Code creation for Builder (All-in-one without headache) -->
+          <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.35); border-radius: 10px; padding: 14px 18px; margin: 16px auto; max-width: 620px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <label style="display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 700; color: #60a5fa; cursor: pointer; font-size: 0.95rem;">
+                <input type="checkbox" id="builderAutoCreateCode" checked style="width: 20px; height: 20px; accent-color: #3b82f6;">
+                🔑 دروستکردنی کۆدی ژوور دەستبەجێ لەگەڵ ئەم یارییە
+              </label>
+              <div style="display: flex; gap: 8px; align-items: center; width: 100%; justify-content: flex-end;">
+                <input type="text" id="builderCustomCodeInput" class="form-input" placeholder="کۆدی ژوور (یان بە بەتاڵی جێیبێڵە بۆ کۆدی هەڕەمەکی)" style="max-width: 320px; text-transform: uppercase;" dir="ltr">
+                <button type="button" id="btnBuilderRandomCode" class="btn btn-secondary" style="padding: 8px 14px; font-size: 0.85rem; white-space: nowrap;">
+                  🎲 کۆدی هەڕەمەکی
+                </button>
+              </div>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.8rem; margin: 8px 0 0 0;">
+              💡 بە یەک کلیک یارییەکە دروست دەبێت و کۆدەکە دەچێتە داتابەیسی هەور و دەستبەجێ بینەران دەتوانن بە کۆدەکە یاری پێبکەن!
+            </p>
+          </div>
+
           <div style="text-align: center; margin-top: 14px;">
-            <button id="btnSaveCustomLevel" class="btn btn-primary" style="padding: 12px 30px; font-size: 1rem;">
-              💾 پاشەکەوتکردنی ئەم یارییە
+            <button id="btnSaveCustomLevel" class="btn btn-primary" style="padding: 13px 36px; font-size: 1.05rem; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);">
+              💾 پاشەکەوتکردنی یاری + دروستکردنی کۆدی ژوور بە یەکجار
             </button>
           </div>
 
@@ -446,6 +465,7 @@
                   <th>سکیل</th>
                   <th>ئاست</th>
                   <th>ژمارەی جووتە ڕەنگەکان</th>
+                  <th>کۆدی ژووری پەیوەستکراو</th>
                   <th>بەرواری دروستکردن</th>
                   <th>کردار</th>
                 </tr>
@@ -454,6 +474,29 @@
                 <!-- Injected via JS -->
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- Quick Live Codes Hub right inside Builder -->
+        <div class="panel-card" style="border: 1px solid #10b981; background: rgba(16, 185, 129, 0.04);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <h3 style="margin: 0; color: #34d399; display: flex; align-items: center; gap: 8px;">
+              ⚡ کۆدە چالاکەکانی ئێستا بۆ پەخشی ڕاستەوخۆ (Live Stream Codes)
+            </h3>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button id="btnBuilderCopyAllCodes" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.85rem; background: #10b981; border-color: #10b981;">
+                📋 کۆپیکردنی هەموو کۆدەکان
+              </button>
+              <button id="btnBuilderQuickBulk10" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">
+                ➕ دروستکردنی ١٠ کۆدی خێرا
+              </button>
+            </div>
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 12px;">
+            هەموو کۆدەکان ڕاستەوخۆ لێرە دەردەکەون بەبێ ئەوەی پێویست بکات بچیتە هیچ بەشێکی تر:
+          </p>
+          <div id="builderActiveCodesContainer" style="display: flex; flex-wrap: wrap; gap: 8px; max-height: 180px; overflow-y: auto; padding: 10px; background: rgba(0, 0, 0, 0.3); border-radius: 8px;">
+            <!-- Injected via JS -->
           </div>
         </div>
 
@@ -559,6 +602,35 @@
 
     </section>
 
+  </div>
+
+  <!-- Modal for newly created game & room code -->
+  <div id="builderSuccessModal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 99999; justify-content: center; align-items: center; padding: 16px;">
+    <div style="background: #1e293b; border: 2px solid #10b981; border-radius: 16px; padding: 26px; max-width: 480px; width: 100%; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.6); animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
+      <div style="font-size: 3.2rem; margin-bottom: 6px;">🎉</div>
+      <h3 style="color: #34d399; margin: 0 0 8px 0; font-size: 1.35rem;">یارییەکە و کۆدی ژوور دروستکران!</h3>
+      <p style="color: #94a3b8; font-size: 0.9rem; margin: 0 0 16px 0;">
+        یارییەکە و کۆدەکەی لە داتابەیسی هەور پاشەکەوت کران و ئێستا ئامادەیە بۆ لایڤ:
+      </p>
+      
+      <div style="background: rgba(16, 185, 129, 0.12); border: 2px dashed #10b981; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+        <div style="font-size: 0.82rem; color: #a7f3d0; margin-bottom: 4px; font-weight: 700;">🔑 کۆدی ژوور بۆ لایڤ (Room Code):</div>
+        <div id="modalGeneratedCodeText" style="font-size: 2.2rem; font-weight: 900; letter-spacing: 3px; color: #ffffff; user-select: all; margin: 6px 0;">ROOM-123</div>
+        <div id="modalLevelNameText" style="font-size: 0.88rem; color: #cbd5e1;">ناوی یاری</div>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <button id="btnModalCopyCode" class="btn btn-primary" style="padding: 10px 22px; font-size: 0.95rem; background: #10b981; border-color: #10b981;">
+          📋 کۆپیکردنی کۆد بۆ لایڤ
+        </button>
+        <a id="btnModalTestGame" href="index.html" target="_blank" class="btn btn-secondary" style="padding: 10px 18px; font-size: 0.95rem;">
+          🎮 یاری پێبکە
+        </a>
+        <button id="btnModalClose" class="btn btn-secondary" style="padding: 10px 18px; font-size: 0.95rem;">
+          داخستن ✕
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Site Footer -->
