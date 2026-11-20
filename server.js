@@ -41,6 +41,54 @@ function fetchSupabaseCodes() {
   });
 }
 
+function fetchSupabaseLevels() {
+  return new Promise((resolve) => {
+    try {
+      const url = new URL('/rest/v1/levels?select=*', SUPABASE_URL);
+      const req = https.request({
+        hostname: url.hostname,
+        path: url.pathname + url.search,
+        method: 'GET',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`
+        },
+        timeout: 3500
+      }, (res) => {
+        let body = '';
+        res.on('data', chunk => body += chunk);
+        res.on('end', () => {
+          try {
+            const data = JSON.parse(body);
+            resolve(Array.isArray(data) ? data : []);
+          } catch(e) { resolve([]); }
+        });
+      });
+      req.on('error', () => resolve([]));
+      req.on('timeout', () => { req.destroy(); resolve([]); });
+      req.end();
+    } catch(e) { resolve([]); }
+  });
+}
+
+async function getAllLevels() {
+  const fileLevels = readJson('levels.json', { easy: [], medium: [], hard: [], custom: [] });
+  try {
+    const sbLevels = await fetchSupabaseLevels();
+    if (Array.isArray(sbLevels) && sbLevels.length > 0) {
+      fileLevels.custom = sbLevels.map(l => ({
+        id: l.id,
+        name: l.name,
+        difficulty: l.difficulty || 'custom',
+        size: l.size || 7,
+        dots: typeof l.dots === 'string' ? JSON.parse(l.dots) : l.dots
+      }));
+      writeJson('levels.json', fileLevels);
+    }
+  } catch(e) {}
+  return fileLevels;
+}
+
 // In-memory active admin sessions
 const activeAdminTokens = new Set();
 
@@ -431,7 +479,7 @@ const server = http.createServer(async (req, res) => {
       writeJson('codes.json', codes);
 
       const settings = readJson('settings.json', {});
-      const allLevels = readJson('levels.json', { easy: [], medium: [], hard: [] });
+      const allLevels = await getAllLevels();
 
       // Determine what levels or mode the player gets
       // If admin settings lock to a specific single level or code locks to a mode:
@@ -452,7 +500,7 @@ const server = http.createServer(async (req, res) => {
 
     // 9. Get Levels (Public)
     if (pathname === '/api/game/levels' && method === 'GET') {
-      const levels = readJson('levels.json', { easy: [], medium: [], hard: [] });
+      const levels = await getAllLevels();
       return sendJson(res, 200, levels);
     }
 

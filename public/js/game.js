@@ -212,13 +212,23 @@ class FlowFreeGame {
   }
 
   resizeCanvas() {
-    const rect = this.canvas.getBoundingClientRect();
+    let rect = this.canvas.getBoundingClientRect();
+    let width = rect.width;
+    if (!width || width === 0) {
+      if (this.canvas.parentElement) {
+        width = this.canvas.parentElement.clientWidth;
+      }
+      if (!width || width === 0) {
+        width = Math.min(window.innerWidth - 32, 420);
+      }
+      if (!width || width <= 0) width = 340;
+    }
     const dpr = window.devicePixelRatio || 1;
-    this.canvas.width = rect.width * dpr;
-    this.canvas.height = rect.height * dpr;
+    this.canvas.width = width * dpr;
+    this.canvas.height = width * dpr;
     this.ctx.resetTransform();
     this.ctx.scale(dpr, dpr);
-    this.cellSize = rect.width / this.size;
+    this.cellSize = width / (this.size || 5);
     this.render();
   }
 
