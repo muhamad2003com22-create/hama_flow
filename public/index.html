@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" href="icons/icon.svg">
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=20">
 </head>
 <body>
 
@@ -32,18 +32,15 @@
       </div>
     </div>
     <div class="nav-actions">
-      <button id="btnInstallApp" class="btn btn-secondary" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.35); color: #34d399; font-size: 0.8rem; padding: 6px 10px;" title="داگرتن وەک ئەپ">
-        📲 دابەزاندن
+      <button id="btnInstallApp" class="btn btn-secondary btn-install-app" title="داگرتن وەک ئەپ">
+        📲 <span class="install-text">دابەزاندن</span>
       </button>
-      <button id="btnDocsModal" class="btn btn-secondary" title="دۆکمێنت و ڕێنمایی">
+      <button id="btnDocsModal" class="btn btn-secondary btn-icon-round" title="دۆکمێنت و ڕێنمایی">
         📖
       </button>
-      <button id="btnSoundToggle" class="btn btn-secondary btn-icon" title="دەنگ">
+      <button id="btnSoundToggle" class="btn btn-secondary btn-icon-round" title="دەنگ">
         🔊
       </button>
-      <a href="admin.html" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.82rem;" title="چوونەژوورەوەی ئەدمین">
-        🔐 ئەدمین
-      </a>
     </div>
   </nav>
 
@@ -75,13 +72,13 @@
           <input type="text" id="playerCodeInput" class="form-input code-input" placeholder="FLOW2026" value="FLOW2026" required autocomplete="off">
         </div>
 
-        <button type="submit" id="btnJoinGame" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 1rem; margin-top: 10px;">
+        <button type="submit" id="btnJoinGame" class="btn btn-primary btn-join-rocket">
           دەستپێکردنی یاری 🚀
         </button>
       </form>
 
-      <div class="auth-notice">
-        💡 <strong>کۆدی سەرەتایی ئامادەکراو:</strong> کۆدی <code>FLOW2026</code> یان <code>HAMA</code> هەمیشە کاردەکات. هەروەها ئەدمین دەتوانێت لە پانێڵی خۆی هەر کۆدێکی تایبەت دروست بکات!
+      <div style="text-align: center; margin-top: 14px; font-size: 0.82rem; color: #94a3b8;">
+        🔑 کۆدی سەرەکی پلاتفۆرم: <strong style="color: #38bdf8;">FLOW2026</strong> یان <strong style="color: #38bdf8;">HAMA</strong>
       </div>
     </section>
 
@@ -257,10 +254,9 @@
       </div>
 
       <div class="doc-section">
-        <h4>🔑 چۆنیەتی چوونەژوورەوەی یاریزانان و ئەدمین</h4>
+        <h4>🔑 چۆنیەتی چوونەژوورەوەی یاریزانان</h4>
         <p>
-          • <strong>یاریزانان (خەڵکی):</strong> پێویست بە دروستکردنی هیچ ئەکاونتێک ناکات! تەنها بە ناوی خۆیان و ئەو کۆدەی کە ئەدمین پێیان دەدات (وەک FLOW2026) دەچنە ژوورەوە.<br>
-          • <strong>ئەدمین (Admin):</strong> تەنها ئەدمین دەتوانێت لەڕێگەی وشەی نهێنیەوە Login بێت بۆ کۆنتڕۆڵکردنی ئاستەکان، دروستکردنی کۆدی نوێ، دیاریکردنی یاری تایبەت، و بینینی ئەنجامەکان کە کێ یەکەم بووە!
+          پێویست بە دروستکردنی هیچ ئەکاونتێک ناکات! تەنها بە ناوی خۆت و کۆدی یاری (وەک FLOW2026 یان ئەو کۆدەی پێتدەدرێت) دەچیتە ژوورەوە و یاری دەکەیت.
         </p>
       </div>
 
@@ -434,6 +430,22 @@
       } catch (e) {}
     }
 
+    // Secret entrance to admin: 3 quick clicks on logo
+    let brandClicks = 0;
+    let brandTimer = null;
+    const navBrand = document.querySelector('.nav-brand');
+    if (navBrand) {
+      navBrand.style.cursor = 'pointer';
+      navBrand.addEventListener('click', () => {
+        brandClicks++;
+        clearTimeout(brandTimer);
+        brandTimer = setTimeout(() => { brandClicks = 0; }, 900);
+        if (brandClicks >= 3) {
+          window.location.href = 'admin.html';
+        }
+      });
+    }
+
     // Handle Player Join
     playerJoinForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -442,6 +454,12 @@
 
       if (!name || !code) {
         showToast('تکایە هەموو خانەکان پڕبکەرەوە');
+        return;
+      }
+
+      // Secret shortcut: typing admin or adminitit in code redirects host to admin
+      if (code === 'ADMIN' || code === 'ADMINITIT' || code === 'ITITADMIN1') {
+        window.location.href = 'admin.html';
         return;
       }
 

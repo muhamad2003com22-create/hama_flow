@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>پانێڵی ئەدمین | hama.flow Admin</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/style.css?v=20">
+  <link rel="stylesheet" href="css/admin.css?v=20">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23ef4444'/></svg>">
 </head>
 <body>
@@ -15,16 +15,16 @@
     <div class="logo-area">
       <div class="logo-icon" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">👑</div>
       <div class="logo-text">
-        <h1>پانێڵی بەڕێوەبەر (Admin)</h1>
-        <span>کۆنتڕۆڵی تەواوەتی hama.flow</span>
+        <h1>hama.flow Admin</h1>
+        <span class="admin-subtitle">کۆنتڕۆڵی تەواوەتی پلاتفۆرم</span>
       </div>
     </div>
     <div class="nav-actions">
       <a href="index.html" target="_blank" class="btn btn-secondary" title="کردنەوەی پەڕەی یاری">
-        🎮 تاقیکردنەوەی پەڕەی یاری
+        🎮 <span class="nav-btn-text">تاقیکردنەوەی یاری</span>
       </a>
       <button id="btnAdminLogout" class="btn btn-danger" style="display: none;">
-        🚪 دەرچوون
+        🚪 <span class="nav-btn-text">دەرچوون</span>
       </button>
     </div>
   </nav>
@@ -42,12 +42,12 @@
       <form id="adminLoginForm">
         <div class="form-group">
           <label for="adminUsernameInput">ناوی بەکارهێنەر (Username):</label>
-          <input type="text" id="adminUsernameInput" class="form-input" placeholder="adminitit" value="adminitit" required autocomplete="username">
+          <input type="text" id="adminUsernameInput" class="form-input" placeholder="ناوی بەکارهێنەر بنووسە..." required autocomplete="username">
         </div>
 
         <div class="form-group">
           <label for="adminPasswordInput">وشەی نهێنی ئەدمین (Password):</label>
-          <input type="password" id="adminPasswordInput" class="form-input" placeholder="ititadmin1" value="ititadmin1" required autocomplete="current-password">
+          <input type="password" id="adminPasswordInput" class="form-input" placeholder="وشەی نهێنی بنووسە..." required autocomplete="current-password">
         </div>
 
         <button type="submit" id="btnAdminSubmitLogin" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1rem; margin-top: 10px;">
@@ -55,8 +55,8 @@
         </button>
       </form>
 
-      <div class="auth-notice">
-        🔑 <strong>ناوی بەکارهێنەر:</strong> <code>adminitit</code> &nbsp;|&nbsp; <strong>وشەی نهێنی:</strong> <code>ititadmin1</code>
+      <div class="auth-notice" style="text-align: center; color: var(--text-muted); font-size: 0.8rem; background: rgba(0,0,0,0.25);">
+        🔒 ئەم بەشە بە تەواوی پارێزراوە و تەنها تایبەتە بە بەڕێوەبەری سەرەکی پلاتفۆرم.
       </div>
     </section>
 

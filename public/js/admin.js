@@ -161,13 +161,9 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.levels;`;
   const btnExportCSV = document.getElementById('btnExportCSV');
   const filterSubmissionsInput = document.getElementById('filterSubmissionsInput');
 
-  // Pre-fill inputs with default credentials if empty
-  if (adminUsernameInput && !adminUsernameInput.value) {
-    adminUsernameInput.value = 'adminitit';
-  }
-  if (adminPasswordInput && !adminPasswordInput.value) {
-    adminPasswordInput.value = 'ititadmin1';
-  }
+  // Brute force protection state
+  let failedLoginAttempts = 0;
+  let loginLockoutUntil = 0;
 
   // Check login on startup
   if (adminToken) {
@@ -176,18 +172,39 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.levels;`;
 
   // Handle Login
   const doAdminLogin = async () => {
-    const username = (adminUsernameInput ? adminUsernameInput.value.trim() : '') || 'adminitit';
-    const password = adminPasswordInput.value.trim() || 'ititadmin1';
+    const now = Date.now();
+    if (now < loginLockoutUntil) {
+      const waitSec = Math.ceil((loginLockoutUntil - now) / 1000);
+      showToast(`🔒 چوونەژوورەوە کاتییانە قوفڵکراوە بۆ پاراستن! تکایە ${waitSec} چرکە چاوەڕوان بە.`);
+      return;
+    }
+
+    const username = (adminUsernameInput ? adminUsernameInput.value.trim() : '');
+    const password = (adminPasswordInput ? adminPasswordInput.value.trim() : '');
+
+    if (!username || !password) {
+      showToast('تکایە ناوی بەکارهێنەر و وشەی نهێنی بنووسە!');
+      return;
+    }
+
     try {
       const res = await API.adminLogin(username, password);
       if (res && res.token) {
+        failedLoginAttempts = 0;
         localStorage.setItem('flow_admin_token', res.token);
         adminToken = res.token;
+        if (adminPasswordInput) adminPasswordInput.value = '';
         showToast('بە سەرکەوتوویی چوویتە ژوورەوە!');
         showDashboard();
       }
     } catch (err) {
-      showToast(err.message || 'ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە!');
+      failedLoginAttempts++;
+      if (failedLoginAttempts >= 5) {
+        loginLockoutUntil = Date.now() + 60000; // 60 seconds lockout
+        showToast('🔒 ٥ جار هەڵەت لێدا! سیستەم بۆ ماوەی ١ خولەک قوفڵ بوو بۆ پاراستنی ئەمنیەتی.');
+      } else {
+        showToast(err.message || 'ناوی بەکارهێنەر یان وشەی نهێنی هەڵەیە!');
+      }
     }
   };
 
