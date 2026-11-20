@@ -299,6 +299,115 @@
   gap: 4px;
 }
 
+/* Live Podium & Leaderboard Badges */
+.winners-podium {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.podium-card {
+  border-radius: 16px;
+  padding: 16px 14px;
+  text-align: center;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.podium-card:hover {
+  transform: translateY(-2px);
+}
+
+.podium-card.rank-1 {
+  background: linear-gradient(145deg, rgba(234, 179, 8, 0.18), rgba(15, 23, 42, 0.85));
+  border: 2px solid #eab308;
+  box-shadow: 0 0 25px rgba(234, 179, 8, 0.25);
+}
+
+.podium-card.rank-2 {
+  background: linear-gradient(145deg, rgba(148, 163, 184, 0.15), rgba(15, 23, 42, 0.85));
+  border: 1px solid #94a3b8;
+}
+
+.podium-card.rank-3 {
+  background: linear-gradient(145deg, rgba(217, 119, 6, 0.15), rgba(15, 23, 42, 0.85));
+  border: 1px solid #d97706;
+}
+
+.podium-icon {
+  font-size: 2.4rem;
+  margin-bottom: 4px;
+  line-height: 1;
+}
+
+.podium-badge {
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+
+.podium-name {
+  color: #fff;
+  margin: 4px 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  max-width: 95%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.podium-time {
+  font-size: 1.5rem;
+  font-weight: 900;
+  font-family: monospace;
+  margin: 4px 0;
+}
+
+.podium-details {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.rank-gold {
+  background: linear-gradient(135deg, #facc15, #ca8a04);
+  color: #000;
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.4);
+}
+
+.rank-silver {
+  background: linear-gradient(135deg, #e2e8f0, #94a3b8);
+  color: #0f172a;
+}
+
+.rank-bronze {
+  background: linear-gradient(135deg, #fb923c, #b45309);
+  color: #fff;
+}
+
+.rank-other {
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
 /* Search Box */
 .search-input-box {
   max-width: 280px;

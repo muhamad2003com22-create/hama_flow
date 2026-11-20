@@ -95,6 +95,9 @@
           </div>
         </div>
         <div class="player-bar-actions">
+          <button id="btnOpenLeaderboard" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8rem; color: #fbbf24; border-color: rgba(251, 191, 36, 0.4); background: rgba(251, 191, 36, 0.1);" title="کێ یەکەمە؟">
+            🏆 کێ یەکەمە؟
+          </button>
           <span class="custom-mode-badge">🟣 یارییە تایبەتەکان</span>
           <button id="btnLeaveGame" class="btn btn-secondary btn-icon" title="دەرچوون">
             🚪 دەرچوون
@@ -204,15 +207,36 @@
         </div>
       </div>
 
-      <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+      <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
         <button id="btnVictoryNext" class="btn btn-primary" style="padding: 12px 24px;">
           ئاستی دواتر 🚀
+        </button>
+        <button id="btnVictoryViewLeaderboard" class="btn btn-secondary" style="padding: 12px 18px; color: #fbbf24; border-color: rgba(251, 191, 36, 0.4);">
+          🏆 کێ یەکەمە؟
         </button>
         <button id="btnVictoryClose" class="btn btn-secondary" style="padding: 12px 18px;">
           داخستن
         </button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- 3.5 Live Leaderboard Modal for Players -->
+  <div id="leaderboardModal" class="modal-overlay" style="display: none; z-index: 99999;">
+    <div class="modal-content" style="max-width: 440px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; padding: 22px; border-radius: 18px; background: #111827; border: 1px solid rgba(251, 191, 36, 0.3); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px;">
+        <h3 style="margin: 0; color: #fbbf24; display: flex; align-items: center; gap: 8px; font-size: 1.15rem;">
+          🏆 کێ یەکەمە؟ (Live Leaderboard)
+        </h3>
+        <button id="btnCloseLeaderboard" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.85rem; border-radius: 50%; width: 30px; height: 30px; min-width: 30px;">✕</button>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0 0 12px 0;" id="leaderboardModalLevelName">
+        ڕیزبەندی ئەو یاریزانانەی بە خێراترین کات یارییەکەیان تەواو کردووە:
+      </p>
+      <div id="playerLeaderboardList" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; max-height: 380px;">
+        <div style="text-align: center; color: var(--text-muted); padding: 20px;">چاوەڕوانی هێنانی زانیارییەکان...</div>
+      </div>
     </div>
   </div>
 
@@ -307,10 +331,10 @@
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase-config.js?v=25"></script>
-  <script src="js/levels.js?v=25"></script>
-  <script src="js/api.js?v=25"></script>
-  <script src="js/game.js?v=25"></script>
+  <script src="js/supabase-config.js?v=35"></script>
+  <script src="js/levels.js?v=35"></script>
+  <script src="js/api.js?v=35"></script>
+  <script src="js/game.js?v=35"></script>
   <script>
     // Main App Logic
     let gameInstance = null;
@@ -669,14 +693,24 @@
 
         const res = await API.submitGame(payload);
 
-        if (res.isFirst) {
+        if (res.isFirst || res.rank === 1) {
           firstPlaceBanner.style.display = 'block';
-          if (res.rank === 1) {
-            firstPlaceBanner.innerHTML = '👑 پیرۆزە! تۆ یەکەم بوویت (خێراترین کات)! 👑';
-          } else {
-            firstPlaceBanner.innerHTML = '👑 پیرۆزە! تۆ یەکەم کەسیت کە ئەم یارییەت تەواو کرد! 👑';
-          }
-          victoryRank.textContent = '#1 یەکەم!';
+          firstPlaceBanner.style.background = 'linear-gradient(135deg, #facc15, #ca8a04)';
+          firstPlaceBanner.style.color = '#000';
+          firstPlaceBanner.innerHTML = '👑 پیرۆزە! تۆ یەکەمی پێشبڕکێکەیت بە خێراترین کات! 👑';
+          victoryRank.textContent = '👑 #1 (پاڵەوان)';
+        } else if (res.rank === 2) {
+          firstPlaceBanner.style.display = 'block';
+          firstPlaceBanner.style.background = 'linear-gradient(135deg, #94a3b8, #475569)';
+          firstPlaceBanner.style.color = '#fff';
+          firstPlaceBanner.innerHTML = '🥈 ئافەرم! تۆ پلەی دووەمت بەدەستهێنا!';
+          victoryRank.textContent = '🥈 #2 دووەم';
+        } else if (res.rank === 3) {
+          firstPlaceBanner.style.display = 'block';
+          firstPlaceBanner.style.background = 'linear-gradient(135deg, #d97706, #78350f)';
+          firstPlaceBanner.style.color = '#fff';
+          firstPlaceBanner.innerHTML = '🥉 ئافەرم! تۆ پلەی سێیەمت بەدەستهێنا!';
+          victoryRank.textContent = '🥉 #3 سێیەم';
         } else {
           firstPlaceBanner.style.display = 'none';
           victoryRank.textContent = `#${res.rank || 1}`;
@@ -688,6 +722,98 @@
       }
 
       victoryModal.classList.add('show');
+    }
+
+    // Leaderboard Modal Logic
+    const leaderboardModal = document.getElementById('leaderboardModal');
+    const btnOpenLeaderboard = document.getElementById('btnOpenLeaderboard');
+    const btnCloseLeaderboard = document.getElementById('btnCloseLeaderboard');
+    const btnVictoryViewLeaderboard = document.getElementById('btnVictoryViewLeaderboard');
+    const playerLeaderboardList = document.getElementById('playerLeaderboardList');
+    const leaderboardModalLevelName = document.getElementById('leaderboardModalLevelName');
+
+    async function openLeaderboardForCurrentLevel() {
+      const list = allLevels[currentCategory] || [];
+      const lvl = gameInstance.level || list[currentLevelIndex];
+      const levelId = lvl ? lvl.id : null;
+      const levelName = lvl ? lvl.name : 'ئەم ئاستە';
+
+      if (leaderboardModalLevelName) {
+        leaderboardModalLevelName.textContent = `ڕیزبەندی خێراترین تەواوکەرەکان بۆ (${levelName}):`;
+      }
+      if (playerLeaderboardList) {
+        playerLeaderboardList.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">چاوەڕوانی هێنانی زانیارییەکان...</div>';
+      }
+      if (leaderboardModal) {
+        leaderboardModal.style.display = 'flex';
+      }
+
+      try {
+        const board = await API.getLeaderboard(levelId);
+        if (!board || board.length === 0) {
+          playerLeaderboardList.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:20px;">هێشتا هیچ یاریزانێک ئەم یارییەی تەواو نەکردووە. تۆ ببە بە یەکەم! 🚀</div>';
+          return;
+        }
+
+        playerLeaderboardList.innerHTML = '';
+        board.slice(0, 15).forEach((item, idx) => {
+          const rank = idx + 1;
+          const isMe = activePlayer && item.playerName === activePlayer.name;
+          const itemEl = document.createElement('div');
+          itemEl.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 10px;
+            background: ${isMe ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.04)'};
+            border: 1px solid ${isMe ? '#38bdf8' : 'rgba(255, 255, 255, 0.08)'};
+          `;
+
+          let rankBadge = `<span style="font-weight:800; font-size:0.85rem; color:#94a3b8; min-width:26px;">#${rank}</span>`;
+          if (rank === 1) {
+            rankBadge = `<span style="background:#eab308; color:#000; font-weight:900; font-size:0.75rem; padding:2px 7px; border-radius:12px;">👑 #1</span>`;
+          } else if (rank === 2) {
+            rankBadge = `<span style="background:#94a3b8; color:#000; font-weight:800; font-size:0.75rem; padding:2px 7px; border-radius:12px;">🥈 #2</span>`;
+          } else if (rank === 3) {
+            rankBadge = `<span style="background:#d97706; color:#fff; font-weight:800; font-size:0.75rem; padding:2px 7px; border-radius:12px;">🥉 #3</span>`;
+          }
+
+          itemEl.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+              ${rankBadge}
+              <strong style="color: ${isMe ? '#38bdf8' : '#fff'}; font-size: 0.95rem;">${item.playerName}</strong>
+              ${isMe ? '<span style="font-size:0.72rem; color:#38bdf8; background:rgba(56,189,248,0.2); padding:1px 5px; border-radius:6px;">تۆ</span>' : ''}
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="color:#10b981; font-weight:800; font-family:monospace; font-size:0.95rem;">${formatTime(item.timeSeconds || 0)}</span>
+              <span style="color:#94a3b8; font-size:0.78rem;">${item.moves || 0} جووڵە</span>
+            </div>
+          `;
+          playerLeaderboardList.appendChild(itemEl);
+        });
+      } catch (e) {
+        playerLeaderboardList.innerHTML = '<div style="text-align:center; color:#f87171; padding:20px;">نەتوانرا زانیارییەکان بهێنرێن</div>';
+      }
+    }
+
+    if (btnOpenLeaderboard) {
+      btnOpenLeaderboard.addEventListener('click', openLeaderboardForCurrentLevel);
+    }
+    if (btnVictoryViewLeaderboard) {
+      btnVictoryViewLeaderboard.addEventListener('click', () => {
+        openLeaderboardForCurrentLevel();
+      });
+    }
+    if (btnCloseLeaderboard) {
+      btnCloseLeaderboard.addEventListener('click', () => {
+        if (leaderboardModal) leaderboardModal.style.display = 'none';
+      });
+    }
+    if (leaderboardModal) {
+      leaderboardModal.addEventListener('click', (e) => {
+        if (e.target === leaderboardModal) leaderboardModal.style.display = 'none';
+      });
     }
 
     btnVictoryClose.addEventListener('click', () => victoryModal.classList.remove('show'));

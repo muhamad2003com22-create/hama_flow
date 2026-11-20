@@ -508,9 +508,11 @@
         <div class="panel-card">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
             <div>
-              <h3>🏆 لیستی ئەو یاریزانانەی یارییەکانیان تەواو کردووە</h3>
+              <h3 style="display: flex; align-items: center; gap: 8px;">
+                🏆 ئەنجامەکان و کێ یەکەمە؟ (Live Competition Leaderboard)
+              </h3>
               <p style="color: var(--text-muted); font-size: 0.88rem;">
-                هەموو ئەو کەسانەی تەواویان کردووە لەگەڵ دیاریکردنی <strong>کێ یەکەم بووە 👑</strong>
+                هەموو یاریزانەکان بەپێی <strong>خێراترین کاتی تەواوکردن</strong> ڕیزبەندی کراون بە دیاریکردنی پاڵەوان و کێ یەکەمە 👑
               </p>
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -526,14 +528,60 @@
             </div>
           </div>
 
-          <div style="margin-bottom: 12px;">
-            <input type="text" id="filterSubmissionsInput" class="form-input search-input-box" placeholder="🔍 گەڕان بەپێی ناوی یاریزان یان کۆد...">
+          <!-- Live Top 3 Winners Podium -->
+          <div class="winners-podium" id="winnersPodiumContainer">
+            <!-- Rank 1: Gold / Champion -->
+            <div class="podium-card rank-1">
+              <div class="podium-icon" style="filter: drop-shadow(0 0 10px #eab308);">👑</div>
+              <span class="podium-badge" style="background: #eab308; color: #000;">🥇 پلەی یەکەم (پاڵەوان)</span>
+              <div class="podium-name" id="podium1Name">چاوەڕوانی یاریزان...</div>
+              <div class="podium-time" id="podium1Time" style="color: #10b981;">--:--</div>
+              <div class="podium-details" id="podium1Details">هێشتا کەس تەواوی نەکردووە</div>
+            </div>
+
+            <!-- Rank 2: Silver -->
+            <div class="podium-card rank-2">
+              <div class="podium-icon">🥈</div>
+              <span class="podium-badge" style="background: #64748b; color: #fff;">پلەی دووەم</span>
+              <div class="podium-name" id="podium2Name">-</div>
+              <div class="podium-time" id="podium2Time" style="color: #38bdf8;">--:--</div>
+              <div class="podium-details" id="podium2Details">-</div>
+            </div>
+
+            <!-- Rank 3: Bronze -->
+            <div class="podium-card rank-3">
+              <div class="podium-icon">🥉</div>
+              <span class="podium-badge" style="background: #b45309; color: #fff;">پلەی سێیەم</span>
+              <div class="podium-name" id="podium3Name">-</div>
+              <div class="podium-time" id="podium3Time" style="color: #fbbf24;">--:--</div>
+              <div class="podium-details" id="podium3Details">-</div>
+            </div>
+          </div>
+
+          <!-- Filters Bar -->
+          <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center;">
+            <div style="flex: 1; min-width: 200px;">
+              <input type="text" id="filterSubmissionsInput" class="form-input" placeholder="🔍 گەڕان بەپێی ناوی یاریزان یان کۆد...">
+            </div>
+            <div>
+              <select id="filterSubmissionsLevel" class="form-input" style="min-width: 170px;">
+                <option value="all">🎮 هەموو یارییەکان</option>
+              </select>
+            </div>
+            <div>
+              <select id="sortSubmissionsOrder" class="form-input" style="min-width: 170px;">
+                <option value="fastest">🥇 خێراترین کات (کێ یەکەمە؟)</option>
+                <option value="newest">⏱️ نوێترین تۆمار</option>
+                <option value="moves">🎯 کەمترین جووڵە</option>
+              </select>
+            </div>
           </div>
 
           <div class="table-responsive">
             <table class="admin-table">
               <thead>
                 <tr>
+                  <th>پلە</th>
                   <th>یاریزان</th>
                   <th>کۆدی بەکارهاتوو</th>
                   <th>یاری / ئاست</th>
@@ -541,7 +589,6 @@
                   <th>کات</th>
                   <th>جووڵەکان</th>
                   <th>داپۆشین</th>
-                  <th>پلە و نیشانەی یەکەم</th>
                   <th>بەروار و کات</th>
                 </tr>
               </thead>
@@ -672,9 +719,9 @@
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase-config.js?v=25"></script>
-  <script src="js/levels.js?v=25"></script>
-  <script src="js/api.js?v=25"></script>
-  <script src="js/admin.js?v=25"></script>
+  <script src="js/supabase-config.js?v=35"></script>
+  <script src="js/levels.js?v=35"></script>
+  <script src="js/api.js?v=35"></script>
+  <script src="js/admin.js?v=35"></script>
 </body>
 </html>

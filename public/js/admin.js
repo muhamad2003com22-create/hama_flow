@@ -297,10 +297,11 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.levels;`;
         const exists = loadedSubmissions.some(s => s.id === newSub.id);
         if (!exists) {
           loadedSubmissions.unshift(newSub);
-          renderSubmissionsTable(loadedSubmissions);
+          updateSubmissionsLevelFilter();
+          renderSubmissions();
           loadStats();
-          if (newSub.isFirst) {
-            showToast(`👑 پیرۆزە! ${newSub.playerName} یەکەم بوو بە کاتی ${formatTime(newSub.timeSeconds)}!`, 6000);
+          if (newSub.isFirst || newSub.rank === 1) {
+            showToast(`👑 پیرۆزە! ${newSub.playerName} بە کاتی ${formatTime(newSub.timeSeconds)} بوو بە یەکەمی پێشبڕکێکە!`, 6000);
           } else {
             showToast(`🏆 یاریزانی نوێ: ${newSub.playerName} کات: ${formatTime(newSub.timeSeconds)}`, 3500);
           }
@@ -1121,56 +1122,190 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.levels;`;
   }
 
   // 5. Submissions & Leaderboard
+  const filterSubmissionsLevel = document.getElementById('filterSubmissionsLevel');
+  const sortSubmissionsOrder = document.getElementById('sortSubmissionsOrder');
+  const podium1Name = document.getElementById('podium1Name');
+  const podium1Time = document.getElementById('podium1Time');
+  const podium1Details = document.getElementById('podium1Details');
+  const podium2Name = document.getElementById('podium2Name');
+  const podium2Time = document.getElementById('podium2Time');
+  const podium2Details = document.getElementById('podium2Details');
+  const podium3Name = document.getElementById('podium3Name');
+  const podium3Time = document.getElementById('podium3Time');
+  const podium3Details = document.getElementById('podium3Details');
+
   async function loadSubmissions() {
     try {
       loadedSubmissions = await API.getAdminSubmissions();
-      renderSubmissionsTable(loadedSubmissions);
+      updateSubmissionsLevelFilter();
+      renderSubmissions();
     } catch (e) {
       console.warn('Error loading submissions:', e);
     }
   }
 
-  if (filterSubmissionsInput) {
-    filterSubmissionsInput.addEventListener('input', () => {
-      const q = filterSubmissionsInput.value.trim().toLowerCase();
-      if (!q) {
-        renderSubmissionsTable(loadedSubmissions);
-        return;
-      }
-      const filtered = loadedSubmissions.filter(s => 
-        (s.playerName && s.playerName.toLowerCase().includes(q)) || 
+  function updateSubmissionsLevelFilter() {
+    if (!filterSubmissionsLevel) return;
+    const currentVal = filterSubmissionsLevel.value;
+    const levelsMap = new Map();
+    (loadedSubmissions || []).forEach(s => {
+      const id = s.levelId || 'unknown';
+      const name = s.levelName || id;
+      if (!levelsMap.has(id)) levelsMap.set(id, name);
+    });
+
+    filterSubmissionsLevel.innerHTML = '<option value="all">🎮 هەموو یارییەکان</option>';
+    levelsMap.forEach((name, id) => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = `🎯 ${name}`;
+      filterSubmissionsLevel.appendChild(opt);
+    });
+
+    if (currentVal && levelsMap.has(currentVal)) {
+      filterSubmissionsLevel.value = currentVal;
+    }
+  }
+
+  function renderSubmissions() {
+    const raw = loadedSubmissions || [];
+    const q = filterSubmissionsInput ? filterSubmissionsInput.value.trim().toLowerCase() : '';
+    const selectedLevel = filterSubmissionsLevel ? filterSubmissionsLevel.value : 'all';
+    const sortBy = sortSubmissionsOrder ? sortSubmissionsOrder.value : 'fastest';
+
+    // 1. Filter by level
+    let filtered = raw;
+    if (selectedLevel !== 'all') {
+      filtered = filtered.filter(s => s.levelId === selectedLevel);
+    }
+
+    // 2. Filter by search query
+    if (q) {
+      filtered = filtered.filter(s =>
+        (s.playerName && s.playerName.toLowerCase().includes(q)) ||
         (s.codeUsed && s.codeUsed.toLowerCase().includes(q)) ||
         (s.levelName && s.levelName.toLowerCase().includes(q))
       );
-      renderSubmissionsTable(filtered);
+    }
+
+    // 3. Update Winners Podium (Always based on fastest time)
+    const podiumSource = [...filtered].sort((a, b) => {
+      if ((a.timeSeconds || 0) !== (b.timeSeconds || 0)) {
+        return (a.timeSeconds || 0) - (b.timeSeconds || 0);
+      }
+      return (a.moves || 0) - (b.moves || 0);
     });
+
+    updatePodium(podiumSource);
+
+    // 4. Sort table list according to user preference
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortBy === 'fastest') {
+        if ((a.timeSeconds || 0) !== (b.timeSeconds || 0)) {
+          return (a.timeSeconds || 0) - (b.timeSeconds || 0);
+        }
+        return (a.moves || 0) - (b.moves || 0);
+      } else if (sortBy === 'moves') {
+        if ((a.moves || 0) !== (b.moves || 0)) {
+          return (a.moves || 0) - (b.moves || 0);
+        }
+        return (a.timeSeconds || 0) - (b.timeSeconds || 0);
+      } else {
+        // newest first
+        const tA = a.completedAt ? new Date(a.completedAt).getTime() : 0;
+        const tB = b.completedAt ? new Date(b.completedAt).getTime() : 0;
+        return tB - tA;
+      }
+    });
+
+    renderSubmissionsTable(sorted);
+  }
+
+  function updatePodium(topList) {
+    // 1st place
+    if (podium1Name && podium1Time && podium1Details) {
+      const p1 = topList[0];
+      if (p1) {
+        podium1Name.textContent = p1.playerName || 'یاریزان';
+        podium1Time.textContent = formatTime(p1.timeSeconds || 0);
+        podium1Details.textContent = `${p1.levelName || p1.levelId} • ${p1.moves || 0} جووڵە • کۆدی ${p1.codeUsed || 'GUEST'}`;
+      } else {
+        podium1Name.textContent = 'چاوەڕوانی پاڵەوان...';
+        podium1Time.textContent = '--:--';
+        podium1Details.textContent = 'هێشتا هیچ یاریزانێک تەواوی نەکردووە';
+      }
+    }
+
+    // 2nd place
+    if (podium2Name && podium2Time && podium2Details) {
+      const p2 = topList[1];
+      if (p2) {
+        podium2Name.textContent = p2.playerName || 'یاریزان';
+        podium2Time.textContent = formatTime(p2.timeSeconds || 0);
+        podium2Details.textContent = `${p2.levelName || p2.levelId} • ${p2.moves || 0} جووڵە`;
+      } else {
+        podium2Name.textContent = '-';
+        podium2Time.textContent = '--:--';
+        podium2Details.textContent = '-';
+      }
+    }
+
+    // 3rd place
+    if (podium3Name && podium3Time && podium3Details) {
+      const p3 = topList[2];
+      if (p3) {
+        podium3Name.textContent = p3.playerName || 'یاریزان';
+        podium3Time.textContent = formatTime(p3.timeSeconds || 0);
+        podium3Details.textContent = `${p3.levelName || p3.levelId} • ${p3.moves || 0} جووڵە`;
+      } else {
+        podium3Name.textContent = '-';
+        podium3Time.textContent = '--:--';
+        podium3Details.textContent = '-';
+      }
+    }
+  }
+
+  if (filterSubmissionsInput) {
+    filterSubmissionsInput.addEventListener('input', () => renderSubmissions());
+  }
+  if (filterSubmissionsLevel) {
+    filterSubmissionsLevel.addEventListener('change', () => renderSubmissions());
+  }
+  if (sortSubmissionsOrder) {
+    sortSubmissionsOrder.addEventListener('change', () => renderSubmissions());
   }
 
   function renderSubmissionsTable(subs) {
     submissionsTableBody.innerHTML = '';
     if (!subs || subs.length === 0) {
-      submissionsTableBody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--text-muted);">هێشتا هیچ یاریزانێک یاری تەواو نەکردووە</td></tr>';
+      submissionsTableBody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding: 20px;">هیچ ئەنجامێک نەدۆزرایەوە</td></tr>';
       return;
     }
 
-    // Sort newest first
-    const sorted = [...subs].reverse();
-
-    sorted.forEach(s => {
+    subs.forEach((s, idx) => {
       const tr = document.createElement('tr');
+      const rank = idx + 1;
       const dateStr = s.completedAt ? new Date(s.completedAt).toLocaleString('ku', { dateStyle: 'short', timeStyle: 'short' }) : '-';
 
+      let rankHtml = `<span class="rank-badge rank-other">#${rank}</span>`;
+      if (rank === 1) {
+        rankHtml = `<span class="rank-badge rank-gold">👑 #1 یەکەم (پاڵەوان)</span>`;
+        tr.style.background = 'rgba(234, 179, 8, 0.08)';
+      } else if (rank === 2) {
+        rankHtml = `<span class="rank-badge rank-silver">🥈 #2 دووەم</span>`;
+      } else if (rank === 3) {
+        rankHtml = `<span class="rank-badge rank-bronze">🥉 #3 سێیەم</span>`;
+      }
+
       tr.innerHTML = `
-        <td><strong>${s.playerName || 'یاریزان'}</strong></td>
+        <td>${rankHtml}</td>
+        <td><strong style="color: #fff; font-size: 0.95rem;">${s.playerName || 'یاریزان'}</strong></td>
         <td><span class="code-pill">${s.codeUsed || 'GUEST'}</span></td>
         <td>${s.levelName || s.levelId}</td>
         <td>${s.gridSize}×${s.gridSize}</td>
-        <td style="color:#10b981; font-weight:700;">${formatTime(s.timeSeconds || 0)}</td>
+        <td style="color:#10b981; font-weight:800; font-size: 1.05rem; font-family: monospace;">${formatTime(s.timeSeconds || 0)}</td>
         <td>${s.moves || 0}</td>
         <td>${s.pipeCoverage || 100}%</td>
-        <td>
-          ${s.isFirst ? '<span class="crown-badge">👑 یەکەم بوو!</span>' : '<span style="color:var(--text-muted);">تەواویکرد</span>'}
-        </td>
         <td style="font-size:0.8rem; color:var(--text-muted);">${dateStr}</td>
       `;
       submissionsTableBody.appendChild(tr);

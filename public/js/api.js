@@ -917,6 +917,13 @@
           }
           const isFirst = wasEmpty || (rank === 1);
 
+          // If this player is #1, clear is_first flag from previous champion
+          if (isFirst) {
+            try {
+              await sb.from('submissions').update({ is_first: false }).eq('level_id', levelId);
+            } catch(e) {}
+          }
+
           const subId = 'sub-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
           const row = {
             id: subId,
@@ -1003,6 +1010,56 @@
         totalCompletions: subs.length,
         submission: newSub
       };
+    },
+
+    // 8.5 Get Live Leaderboard for Level or All
+    async getLeaderboard(levelId = null) {
+      const sb = getSupabase();
+      if (sb) {
+        try {
+          let query = sb.from('submissions')
+            .select('*')
+            .order('time_seconds', { ascending: true })
+            .order('moves', { ascending: true })
+            .limit(100);
+          if (levelId) {
+            query = query.eq('level_id', levelId);
+          }
+          const { data, error } = await query;
+          if (!error && Array.isArray(data)) {
+            return data.map((s, idx) => ({
+              id: s.id,
+              rank: idx + 1,
+              playerName: s.player_name,
+              codeUsed: s.code_used,
+              levelId: s.level_id,
+              levelName: s.level_name,
+              gridSize: s.grid_size,
+              moves: s.moves,
+              timeSeconds: s.time_seconds,
+              pipeCoverage: s.pipe_coverage,
+              isFirst: idx === 0,
+              completedAt: s.created_at
+            }));
+          }
+        } catch (e) {
+          console.warn('getLeaderboard supabase error:', e);
+        }
+      }
+
+      let subs = getLocalJson('flow_submissions', []);
+      if (levelId) {
+        subs = subs.filter(s => s.levelId === levelId);
+      }
+      subs.sort((a, b) => {
+        if (a.timeSeconds !== b.timeSeconds) return a.timeSeconds - b.timeSeconds;
+        return a.moves - b.moves;
+      });
+      return subs.map((s, idx) => ({
+        ...s,
+        rank: idx + 1,
+        isFirst: idx === 0
+      }));
     },
 
     // 9. Levels
