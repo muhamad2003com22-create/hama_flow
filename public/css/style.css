@@ -138,6 +138,19 @@ body {
   background: rgba(239, 68, 68, 0.25);
 }
 
+.btn-nav-admin {
+  background: linear-gradient(135deg, #2563eb, #38bdf8) !important;
+  color: #fff !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 0 15px rgba(37, 99, 235, 0.35) !important;
+  font-weight: 700;
+  text-decoration: none;
+}
+.btn-nav-admin:hover {
+  box-shadow: 0 0 22px rgba(56, 189, 248, 0.6) !important;
+  transform: translateY(-1px);
+}
+
 .btn-icon {
   padding: 8px;
   border-radius: var(--radius-sm);
@@ -925,7 +938,8 @@ body {
     transform: scale(0.92);
   }
 
-  .install-text {
+  .install-text,
+  .admin-nav-text {
     display: none !important;
   }
 
