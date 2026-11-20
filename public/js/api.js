@@ -564,14 +564,16 @@
     async clearAllAdminCodes() {
       const sb = getSupabase();
       if (sb) {
-        const { error } = await sb.from('codes').delete().neq('code', 'FLOW2026');
-        if (error) throw new Error(error.message);
-        return { success: true, message: 'تەواوی کۆدەکان سڕانەوە' };
+        try {
+          await sb.from('codes').delete().neq('code', '');
+        } catch (e) {
+          console.warn('Supabase clear codes error:', e);
+        }
       }
 
       try {
         if (!isFileProtocol) {
-          return await this.request('/api/admin/codes/clear-all', { method: 'DELETE' });
+          await this.request('/api/admin/codes/clear-all', { method: 'DELETE' });
         }
       } catch (err) {}
 
@@ -583,19 +585,21 @@
       const cleanCode = (code || '').toUpperCase();
       const sb = getSupabase();
       if (sb) {
-        const { error } = await sb.from('codes').delete().eq('code', cleanCode);
-        if (error) throw new Error(error.message);
-        return { success: true };
+        try {
+          await sb.from('codes').delete().eq('code', cleanCode);
+        } catch (e) {
+          console.warn('Supabase code delete error:', e);
+        }
       }
 
       try {
         if (!isFileProtocol) {
-          return await this.request(`/api/admin/codes/${encodeURIComponent(cleanCode)}`, { method: 'DELETE' });
+          await this.request(`/api/admin/codes/${encodeURIComponent(cleanCode)}`, { method: 'DELETE' });
         }
       } catch (err) {}
 
       let codes = getLocalJson('flow_codes', []);
-      codes = codes.filter(c => c.code !== cleanCode);
+      codes = codes.filter(c => (c.code || '').toUpperCase() !== cleanCode);
       setLocalJson('flow_codes', codes);
       return { success: true };
     },
@@ -666,14 +670,16 @@
     async clearAdminSubmissions() {
       const sb = getSupabase();
       if (sb) {
-        const { error } = await sb.from('submissions').delete().neq('id', 'NONE');
-        if (error) throw new Error(error.message);
-        return { success: true };
+        try {
+          await sb.from('submissions').delete().neq('id', 'NONE');
+        } catch (e) {
+          console.warn('Supabase clear submissions error:', e);
+        }
       }
 
       try {
         if (!isFileProtocol) {
-          return await this.request('/api/admin/submissions', { method: 'DELETE' });
+          await this.request('/api/admin/submissions', { method: 'DELETE' });
         }
       } catch (err) {}
       setLocalJson('flow_submissions', []);

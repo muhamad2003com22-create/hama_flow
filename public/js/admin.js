@@ -521,19 +521,73 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.levels;`;
     });
   }
 
+  // Mobile-Friendly, Non-blocking Modal Confirmation (Never blocked by browser dialog limits)
+  function appConfirm(message, title = 'دڵنیابوونەوە لە سڕینەوە') {
+    return new Promise((resolve) => {
+      const modal = document.getElementById('confirmActionModal');
+      const msgEl = document.getElementById('confirmModalMessage');
+      const titleEl = document.getElementById('confirmModalTitle');
+      const btnYes = document.getElementById('btnConfirmModalYes');
+      const btnNo = document.getElementById('btnConfirmModalNo');
+
+      if (!modal || !btnYes || !btnNo) {
+        try {
+          resolve(window.confirm(message));
+        } catch (e) {
+          resolve(true);
+        }
+        return;
+      }
+
+      if (msgEl) msgEl.textContent = message;
+      if (titleEl) titleEl.textContent = title;
+      modal.style.display = 'flex';
+
+      const cleanup = (res) => {
+        modal.style.display = 'none';
+        btnYes.removeEventListener('click', onYes);
+        btnNo.removeEventListener('click', onNo);
+        modal.removeEventListener('click', onOverlay);
+        resolve(res);
+      };
+
+      const onYes = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        cleanup(true);
+      };
+
+      const onNo = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        cleanup(false);
+      };
+
+      const onOverlay = (e) => {
+        if (e.target === modal) cleanup(false);
+      };
+
+      btnYes.addEventListener('click', onYes);
+      btnNo.addEventListener('click', onNo);
+      modal.addEventListener('click', onOverlay);
+    });
+  }
+
   // Clear All Codes
   if (btnClearAllCodes) {
-    btnClearAllCodes.addEventListener('click', async () => {
+    btnClearAllCodes.addEventListener('click', async (e) => {
+      e.preventDefault();
       if (!loadedCodes || loadedCodes.length === 0) {
         showToast('هیچ کۆدێک نییە بۆ سڕینەوە');
         return;
       }
-      if (confirm(`⚠️ دڵنیایت لە سڕینەوەی هەموو کۆدەکان (${loadedCodes.length} کۆد)؟ ئەم کردارە ناگەڕێتەوە!`)) {
+      const confirmed = await appConfirm(`⚠️ دڵنیایت لە سڕینەوەی هەموو کۆدەکان (${loadedCodes.length} کۆد)؟ ئەم کردارە ناگەڕێتەوە!`, 'سڕینەوەی هەموو کۆدەکان');
+      if (confirmed) {
         try {
           await API.clearAllAdminCodes();
           showToast('تەواوی کۆدەکان بە سەرکەوتوویی سڕانەوە!');
-          loadCodes();
-          loadStats();
+          await loadCodes();
+          await loadStats();
         } catch (err) {
           showToast(err.message || 'هەڵەیەک ڕوویدا');
         }
@@ -641,16 +695,19 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.levels;`;
 
     // Delete action
     codesTableBody.querySelectorAll('.btn-delete-code').forEach(b => {
-      b.addEventListener('click', async () => {
+      b.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const code = b.dataset.code;
-        if (confirm(`دڵنیایت لە سڕینەوەی کۆدی ${code}؟`)) {
+        const confirmed = await appConfirm(`دڵنیایت لە سڕینەوەی کۆدی (${code})؟`, 'سڕینەوەی کۆد');
+        if (confirmed) {
           try {
             await API.deleteAdminCode(code);
-            showToast(`کۆدی ${code} سڕایەوە`);
-            loadCodes();
-            loadStats();
+            showToast(`کۆدی ${code} بە سەرکەوتوویی سڕایەوە!`);
+            await loadCodes();
+            await loadStats();
           } catch (err) {
-            showToast(err.message);
+            showToast(err.message || 'هەڵە لە سڕینەوەی کۆد');
           }
         }
       });
@@ -691,10 +748,13 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.levels;`;
     selectedColor = colEl.dataset.color;
   });
 
-  btnClearBuilderGrid.addEventListener('click', () => {
-    if (confirm('دڵنیایت لە پاککردنەوەی بۆردەکە؟')) {
+  btnClearBuilderGrid.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const confirmed = await appConfirm('دڵنیایت لە پاککردنەوەی بۆردەکە و لادانی هەموو خاڵەکان؟', 'پاککردنەوەی بۆرد');
+    if (confirmed) {
       builderCells = {};
       renderBuilderGrid();
+      showToast('بۆردەکە بە سەرکەوتوویی پاککرایەوە!');
     }
   });
 
@@ -1020,13 +1080,20 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.levels;`;
       });
 
       customLevelsTableBody.querySelectorAll('.btn-delete-custom-lvl').forEach(b => {
-        b.addEventListener('click', async () => {
+        b.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           const id = b.dataset.id;
-          if (confirm('دڵنیایت لە سڕینەوەی ئەم یارییە؟')) {
-            await API.deleteCustomLevel(id);
-            showToast('یارییە تایبەتەکە سڕایەوە');
-            loadCustomLevelsList();
-            loadStats();
+          const confirmed = await appConfirm('دڵنیایت لە سڕینەوەی ئەم یارییە تایبەتە؟', 'سڕینەوەی یاری');
+          if (confirmed) {
+            try {
+              await API.deleteCustomLevel(id);
+              showToast('یارییە تایبەتەکە بە سەرکەوتوویی سڕایەوە!');
+              await loadCustomLevelsList();
+              await loadStats();
+            } catch (err) {
+              showToast(err.message || 'هەڵە لە سڕینەوە');
+            }
           }
         });
       });
@@ -1037,12 +1104,18 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.levels;`;
 
   const btnClearAllCustomLevels = document.getElementById('btnClearAllCustomLevels');
   if (btnClearAllCustomLevels) {
-    btnClearAllCustomLevels.addEventListener('click', async () => {
-      if (confirm('دڵنیایت لە سڕینەوەی هەموو یارییە تایبەتەکان؟ ئەم بەشە بە تەواوی بەتاڵ دەبێتەوە.')) {
-        await API.clearAllCustomLevels();
-        showToast('هەموو یارییە تایبەتەکان سڕانەوە و بەتاڵ کران!');
-        loadCustomLevelsList();
-        loadStats();
+    btnClearAllCustomLevels.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const confirmed = await appConfirm('دڵنیایت لە سڕینەوەی هەموو یارییە تایبەتەکان؟ ئەم بەشە بە تەواوی بەتاڵ دەبێتەوە.', 'سڕینەوەی هەموو یارییەکان');
+      if (confirmed) {
+        try {
+          await API.clearAllCustomLevels();
+          showToast('هەموو یارییە تایبەتەکان سڕانەوە و بەتاڵ کران!');
+          await loadCustomLevelsList();
+          await loadStats();
+        } catch (err) {
+          showToast(err.message || 'هەڵە لە سڕینەوە');
+        }
       }
     });
   }
@@ -1153,15 +1226,17 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.levels;`;
     });
   }
 
-  btnClearSubmissions.addEventListener('click', async () => {
-    if (confirm('دڵنیایت لە سڕینەوەی هەموو ئەنجامە تۆمارکراوەکان؟')) {
+  btnClearSubmissions.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const confirmed = await appConfirm('دڵنیایت لە سڕینەوەی هەموو ئەنجامە تۆمارکراوەکان؟ تەواوی لیستی پلەبەندی بەتاڵ دەبێتەوە.', 'سڕینەوەی ئەنجامەکان');
+    if (confirmed) {
       try {
         await API.clearAdminSubmissions();
-        showToast('هەموو تۆمارەکان بە سەرکەوتوویی سڕانەوە');
-        loadSubmissions();
-        loadStats();
+        showToast('هەموو تۆمارەکان بە سەرکەوتوویی سڕانەوە!');
+        await loadSubmissions();
+        await loadStats();
       } catch (err) {
-        showToast(err.message);
+        showToast(err.message || 'هەڵە لە سڕینەوە');
       }
     }
   });

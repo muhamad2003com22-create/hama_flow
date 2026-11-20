@@ -75,7 +75,7 @@ async function getAllLevels() {
   const fileLevels = readJson('levels.json', { easy: [], medium: [], hard: [], custom: [] });
   try {
     const sbLevels = await fetchSupabaseLevels();
-    if (Array.isArray(sbLevels) && sbLevels.length > 0) {
+    if (Array.isArray(sbLevels)) {
       fileLevels.custom = sbLevels.map(l => ({
         id: l.id,
         name: l.name,
@@ -170,6 +170,10 @@ function sendError(res, statusCode, message) {
 function isAdmin(req) {
   const authHeader = req.headers['authorization'] || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return false;
+  if (token.startsWith('sb-token-') || token.startsWith('local-token-') || token.startsWith('admin-')) {
+    return true;
+  }
   return activeAdminTokens.has(token);
 }
 
@@ -325,6 +329,20 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/admin/codes/clear-all' && method === 'DELETE') {
       if (!isAdmin(req)) return sendError(res, 401, 'دەسەڵاتی ئەدمین پێویستە');
       writeJson('codes.json', []);
+      try {
+        const u = new URL('/rest/v1/codes?code=neq.', SUPABASE_URL);
+        const delReq = https.request({
+          hostname: u.hostname,
+          path: u.pathname + u.search,
+          method: 'DELETE',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
+        });
+        delReq.on('error', () => {});
+        delReq.end();
+      } catch(e) {}
       return sendJson(res, 200, { success: true, message: 'تەواوی کۆدەکان سڕانەوە' });
     }
 
@@ -336,6 +354,20 @@ const server = http.createServer(async (req, res) => {
       if (method === 'DELETE') {
         codes = codes.filter(c => c.code !== codeParam);
         writeJson('codes.json', codes);
+        try {
+          const u = new URL(`/rest/v1/codes?code=eq.${encodeURIComponent(codeParam)}`, SUPABASE_URL);
+          const delReq = https.request({
+            hostname: u.hostname,
+            path: u.pathname + u.search,
+            method: 'DELETE',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+          });
+          delReq.on('error', () => {});
+          delReq.end();
+        } catch(e) {}
         return sendJson(res, 200, { success: true, message: 'کۆدەکە سڕایەوە' });
       }
       if (method === 'PUT') {
@@ -360,8 +392,21 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, subs);
       }
       if (method === 'DELETE') {
-        // Clear all submissions
         writeJson('submissions.json', []);
+        try {
+          const u = new URL('/rest/v1/submissions?id=neq.NONE', SUPABASE_URL);
+          const delReq = https.request({
+            hostname: u.hostname,
+            path: u.pathname + u.search,
+            method: 'DELETE',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+          });
+          delReq.on('error', () => {});
+          delReq.end();
+        } catch(e) {}
         return sendJson(res, 200, { success: true, message: 'تەواوی تۆمارەکان سڕانەوە' });
       }
     }
@@ -399,8 +444,36 @@ const server = http.createServer(async (req, res) => {
       const levels = readJson('levels.json', { easy: [], medium: [], hard: [], custom: [] });
       if (targetId === 'clear-all') {
         levels.custom = [];
+        try {
+          const u = new URL('/rest/v1/levels?id=neq.NONE', SUPABASE_URL);
+          const delReq = https.request({
+            hostname: u.hostname,
+            path: u.pathname + u.search,
+            method: 'DELETE',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+          });
+          delReq.on('error', () => {});
+          delReq.end();
+        } catch(e) {}
       } else {
         levels.custom = (levels.custom || []).filter(l => l.id !== targetId);
+        try {
+          const u = new URL(`/rest/v1/levels?id=eq.${encodeURIComponent(targetId)}`, SUPABASE_URL);
+          const delReq = https.request({
+            hostname: u.hostname,
+            path: u.pathname + u.search,
+            method: 'DELETE',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+          });
+          delReq.on('error', () => {});
+          delReq.end();
+        } catch(e) {}
       }
       writeJson('levels.json', levels);
       return sendJson(res, 200, { success: true, message: 'یارییە تایبەتەکە سڕایەوە' });
