@@ -1,8 +1,9 @@
+// ========================================================
 // Supabase Configuration for hama.flow
-// لێرە یان لەناو پانێڵی ئەدمین دەتوانیت زانیارییەکانی Supabase دابنێیت
+// پەیوەندی سەد لە سەد ڕاستەوخۆ بە داتابەیسی هەوری Supabase
+// ========================================================
 
 window.SUPABASE_CONFIG = {
-  // پڕۆژەکەت لە Supabase دروست بکە و ئەم دوو بەهایە لێرە دابنێ:
-  url: localStorage.getItem('flow_supabase_url') || '',
-  anonKey: localStorage.getItem('flow_supabase_key') || ''
+  url: 'https://pxhinvlsmdgrnuxvhwuw.supabase.co',
+  anonKey: 'sb_publishable_HrOlqCQ6_XMg-7u5aALsEA_2FmAPeDw'
 };
