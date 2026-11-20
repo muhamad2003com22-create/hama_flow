@@ -1,10 +1,26 @@
 [
   {
     "code": "FLOW2026",
-    "label": "کۆدی سەرەکی گشتی (هەموو ئاستەکان)",
+    "label": "کۆدی سەرەکی گشتی (hama.flow)",
     "mode": "all",
     "active": true,
     "createdAt": "2026-11-20T07:29:23.192Z",
+    "usedCount": 0
+  },
+  {
+    "code": "HAMA",
+    "label": "کۆدی سەرەکی حەمە",
+    "mode": "all",
+    "active": true,
+    "createdAt": "2026-11-20T07:29:23.192Z",
+    "usedCount": 0
+  },
+  {
+    "code": "VIP257",
+    "label": "کۆدی یاری تایبەت",
+    "mode": "custom",
+    "active": true,
+    "createdAt": "2026-11-20T15:08:41.665Z",
     "usedCount": 0
   },
   {
@@ -29,14 +45,6 @@
     "mode": "hard",
     "active": true,
     "createdAt": "2026-11-20T07:29:23.193Z",
-    "usedCount": 0
-  },
-  {
-    "code": "CUSTOM77",
-    "label": "تەنها یارییە تایبەتەکانی ئەدمین",
-    "mode": "custom",
-    "active": true,
-    "createdAt": "2026-11-20T07:52:27.276Z",
     "usedCount": 0
   }
 ]

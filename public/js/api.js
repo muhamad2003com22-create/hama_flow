@@ -769,23 +769,18 @@
       const normalizedInput = cleanCode.replace(/[\s\-_.]/g, '');
       const isMasterCode = ['FLOW2026', 'HAMA', 'HAMAFLOW', 'VIP', 'EASY55', 'MED77', 'HARD99'].includes(normalizedInput);
 
-      // Check with Supabase Cloud Database first
+      // 1. Check with Supabase Cloud Database first
       const sb = getSupabase();
       if (sb) {
         try {
           let matched = null;
-          const { data: dbCode, error: cErr } = await sb.from('codes').select('*').ilike('code', cleanCode).maybeSingle();
-          if (dbCode) {
-            matched = dbCode;
-          } else {
-            // Also check list in case of formatting differences
-            const { data: allCodes } = await sb.from('codes').select('*');
-            if (allCodes && Array.isArray(allCodes)) {
-              matched = allCodes.find(c => {
-                const cNorm = (c.code || '').toUpperCase().replace(/[\s\-_.]/g, '');
-                return (c.code && c.code.toUpperCase() === cleanCode) || cNorm === normalizedInput;
-              });
-            }
+          const { data: allCodes, error: cErr } = await sb.from('codes').select('*');
+          if (allCodes && Array.isArray(allCodes)) {
+            matched = allCodes.find(c => {
+              const cClean = (c.code || '').trim().toUpperCase();
+              const cNorm = cClean.replace(/[\s\-_.]/g, '');
+              return cClean === cleanCode || cNorm === normalizedInput;
+            });
           }
 
           if (!matched && isMasterCode) {
@@ -835,21 +830,19 @@
         }
       }
 
-      // Backend Server Check
-      try {
-        if (!isFileProtocol) {
+      // 2. Backend Server Check
+      if (!isFileProtocol) {
+        try {
           return await this.request('/api/player/join', {
             method: 'POST',
             body: JSON.stringify({ name, code })
           });
-        }
-      } catch (err) {
-        if (err.message && !err.message.includes("LOCAL_MODE") && !err.message.includes("Failed to fetch")) {
-          throw err;
+        } catch (err) {
+          console.warn("Backend server playerJoin error, trying local storage:", err.message);
         }
       }
 
-      // Local Fallback Check
+      // 3. Local Storage Fallback Check
       let codes = getLocalJson('flow_codes', []);
       if (!Array.isArray(codes) || codes.length === 0) {
         codes = [
@@ -871,7 +864,7 @@
       }
 
       if (!matchedLocal) {
-        throw new Error('ئەم کۆدە هەڵەیە یان بوونی نییە! دەتوانیت کۆدی FLOW2026 یان HAMA بنووسیت.');
+        throw new Error('ئەم کۆدە هەڵەیە یان بوونی نییە! تکایە کۆدی ژووری دروست بنووسە.');
       }
       if (!matchedLocal.active) {
         throw new Error('ئەم کۆدە لە ئێستادا ناچالاک کراوە لەلایەن ئەدمینەوە');

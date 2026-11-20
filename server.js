@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -6,6 +7,39 @@ const crypto = require('crypto');
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const DATA_DIR = path.join(__dirname, 'data');
+
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://pxhinvlsmdgrnuxvhwuw.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_HrOlqCQ6_XMg-7u5aALsEA_2FmAPeDw';
+
+function fetchSupabaseCodes() {
+  return new Promise((resolve) => {
+    try {
+      const url = new URL('/rest/v1/codes?select=*', SUPABASE_URL);
+      const req = https.request({
+        hostname: url.hostname,
+        path: url.pathname + url.search,
+        method: 'GET',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`
+        },
+        timeout: 3500
+      }, (res) => {
+        let body = '';
+        res.on('data', chunk => body += chunk);
+        res.on('end', () => {
+          try {
+            const data = JSON.parse(body);
+            resolve(Array.isArray(data) ? data : []);
+          } catch(e) { resolve([]); }
+        });
+      });
+      req.on('error', () => resolve([]));
+      req.on('timeout', () => { req.destroy(); resolve([]); });
+      req.end();
+    } catch(e) { resolve([]); }
+  });
+}
 
 // In-memory active admin sessions
 const activeAdminTokens = new Set();
@@ -361,6 +395,28 @@ const server = http.createServer(async (req, res) => {
         matched = { code: cleanCode, label: 'کۆدی پەسەندکراو', mode: 'all', active: true, usedCount: 0 };
         codes.push(matched);
         writeJson('codes.json', codes);
+      }
+
+      // Check Supabase Cloud Database if not matched locally
+      if (!matched) {
+        try {
+          const sbCodes = await fetchSupabaseCodes();
+          const foundSb = sbCodes.find(c => {
+            const cNorm = (c.code || '').toUpperCase().replace(/[\s\-_.]/g, '');
+            return (c.code && c.code.toUpperCase() === cleanCode) || cNorm === normalizedInput;
+          });
+          if (foundSb) {
+            matched = {
+              code: foundSb.code,
+              label: foundSb.label || 'کۆدی ژوور',
+              mode: foundSb.mode || 'custom',
+              active: foundSb.active !== false,
+              usedCount: foundSb.used_count || 0
+            };
+            codes.push(matched);
+            writeJson('codes.json', codes);
+          }
+        } catch (e) {}
       }
 
       if (!matched) {
