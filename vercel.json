@@ -6,6 +6,7 @@
     { "source": "/admin", "destination": "/public/admin.html" },
     { "source": "/admin.html", "destination": "/public/admin.html" },
     { "source": "/docs", "destination": "/public/docs/guide.html" },
+    { "source": "/sw.js", "destination": "/public/sw.js" },
     { "source": "/(.*)", "destination": "/public/$1" }
   ],
   "headers": [

@@ -849,11 +849,20 @@
     const androidInstallBox = document.getElementById('androidInstallBox');
     const iosInstallBox = document.getElementById('iosInstallBox');
 
-    // Register Service Worker
+    // Register Service Worker & Wipe Stale Caches
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(console.warn);
+        navigator.serviceWorker.register('./sw.js?v=50').then(reg => {
+          reg.update();
+        }).catch(console.warn);
       });
+      if ('caches' in window) {
+        caches.keys().then(keys => {
+          keys.forEach(k => {
+            if (k !== 'flow-free-v50') caches.delete(k);
+          });
+        });
+      }
     }
 
     // Capture install prompt (Chrome / Android / Edge)
