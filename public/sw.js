@@ -1,5 +1,5 @@
 // Service Worker for Flow Free Kurdish PWA - Network-First for HTML
-const CACHE_NAME = 'flow-free-v50';
+const CACHE_NAME = 'flow-free-v55';
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();

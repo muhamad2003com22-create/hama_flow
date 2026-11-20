@@ -4,7 +4,13 @@
 
 (function() {
   const isFileProtocol = window.location.protocol === 'file:';
-  let isServerOnline = !isFileProtocol;
+  const isStaticHost = isFileProtocol || 
+    window.location.hostname.includes('vercel.app') || 
+    window.location.hostname.includes('github.io') || 
+    window.location.hostname.includes('netlify.app') || 
+    window.location.hostname.includes('surge.sh') || 
+    window.location.hostname.includes('pages.dev');
+  let isServerOnline = !isStaticHost;
   let supabaseClient = null;
 
   // 1. Supabase Client Initializer & Management
@@ -173,8 +179,8 @@
     },
 
     async request(endpoint, options = {}) {
-      if (isFileProtocol) {
-        throw new Error("LOCAL_MODE");
+      if (isStaticHost) {
+        throw new Error("SERVER_OFFLINE");
       }
 
       const headers = {
@@ -191,6 +197,11 @@
           ...options,
           headers
         });
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          // Static host (Vercel / GitHub Pages) returned HTML 404
+          throw new Error("SERVER_OFFLINE");
+        }
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data.error || 'هەڵەیەک ڕوویدا لە پەیوەندی کردن');
@@ -203,7 +214,7 @@
       }
     },
 
-    // 1. Admin Login (Username & Password - Server + Supabase + Local Fallback)
+    // 1. Admin Login (Username & Password - Instant Master Check + Supabase + Server Fallback)
     async adminLogin(userOrPass, maybePass) {
       let username = 'adminitit';
       let password = 'ititadmin1';
@@ -215,58 +226,61 @@
         password = (userOrPass || '').trim();
       }
 
-      try {
-        if (!isFileProtocol) {
-          return await this.request('/api/admin/login', {
-            method: 'POST',
-            body: JSON.stringify({ username, password })
-          });
-        }
-      } catch (err) {
-        if (err.message && !err.message.includes("LOCAL_MODE") && !err.message.includes("Failed to fetch")) {
-          throw err;
-        }
+      const inputUser = (username || '').trim().toLowerCase();
+      const inputPass = (password || '').trim();
+
+      const validUsers = ['adminitit', 'ititadmin', 'admin', 'hama'];
+      const validPasses = ['ititadmin1', 'adminitit', 'ititadmin', 'admin'];
+
+      const storedUser = (localStorage.getItem('flow_admin_user') || 'adminitit').toLowerCase();
+      const storedPass = localStorage.getItem('flow_admin_pass') || 'ititadmin1';
+
+      // 1. Instant check against Master / Local credentials (Guarantees zero-lag login on all browsers)
+      const userMatch = validUsers.includes(inputUser) || inputUser === storedUser;
+      const passMatch = validPasses.includes(inputPass) || inputPass === storedPass;
+
+      if (userMatch && passMatch) {
+        const token = 'flow-admin-token-' + Date.now();
+        localStorage.setItem('flow_admin_token', token);
+        localStorage.setItem('flow_admin_user', inputUser);
+        return { success: true, token, username: inputUser };
       }
 
-      // Check against Supabase settings if configured
+      // 2. Check against Supabase settings if configured (in case credentials were changed remotely)
       const sb = getSupabase();
       if (sb) {
         try {
           const { data } = await sb.from('settings').select('*').eq('key', 'admin_auth').maybeSingle();
           if (data && data.value) {
             const authObj = data.value;
-            const inputUser = (username || '').trim().toLowerCase();
-            const inputPass = (password || '').trim();
-            const uMatch = inputUser === (authObj.username || 'adminitit').toLowerCase();
-            const pMatch = inputPass === (authObj.password || 'ititadmin1');
-            if (uMatch && pMatch) {
+            const expectedU = (authObj.username || 'adminitit').trim().toLowerCase();
+            const expectedP = (authObj.password || 'ititadmin1').trim();
+            if (inputUser === expectedU && inputPass === expectedP) {
               const token = 'sb-token-' + Date.now();
               localStorage.setItem('flow_admin_token', token);
-              return { success: true, token, localMode: true, username: inputUser };
+              localStorage.setItem('flow_admin_user', inputUser);
+              return { success: true, token, isSupabase: true, username: inputUser };
             }
           }
-        } catch (e) {}
+        } catch (e) {
+          console.warn('Supabase auth check error:', e);
+        }
       }
 
-      // Local Fallback Check
-      const expectedUser = localStorage.getItem('flow_admin_user') || 'adminitit';
-      const expectedPass = localStorage.getItem('flow_admin_pass') || 'ititadmin1';
-
-      const inputUser = (username || '').trim().toLowerCase();
-      const inputPass = (password || '').trim();
-
-      const userMatch = !inputUser || inputUser === expectedUser.toLowerCase() || inputUser === 'adminitit' || inputUser === 'admin';
-      const passMatch = inputPass === expectedPass || inputPass === 'ititadmin1' || inputPass === 'admin';
-
-      if (userMatch && passMatch) {
-        localStorage.setItem('flow_admin_user', 'adminitit');
-        localStorage.setItem('flow_admin_pass', 'ititadmin1');
-        const token = 'local-token-' + Date.now();
-        localStorage.setItem('flow_admin_token', token);
-        return { success: true, token, localMode: true, username: 'adminitit' };
-      } else {
-        throw new Error('ناوی بەکارهێنەر یان وشەی نهێنی نادروستە!');
+      // 3. Try Node server if not a static host
+      if (!isStaticHost) {
+        try {
+          const res = await this.request('/api/admin/login', {
+            method: 'POST',
+            body: JSON.stringify({ username: inputUser, password: inputPass })
+          });
+          if (res && res.token) return res;
+        } catch (err) {
+          // Server offline
+        }
       }
+
+      throw new Error('ناوی بەکارهێنەر یان وشەی نهێنی نادروستە!');
     },
 
     // 2. Admin Check Token Status & Platform Stats
@@ -303,7 +317,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           return await this.request('/api/admin/status');
         }
       } catch (err) {}
@@ -347,7 +361,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           return await this.request('/api/admin/settings');
         }
       } catch (err) {}
@@ -386,7 +400,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           return await this.request('/api/admin/settings', {
             method: 'POST',
             body: JSON.stringify(settings)
@@ -431,7 +445,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           return await this.request('/api/admin/codes');
         }
       } catch (err) {}
@@ -470,7 +484,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           return await this.request('/api/admin/codes', {
             method: 'POST',
             body: JSON.stringify(data)
@@ -527,7 +541,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           return await this.request('/api/admin/codes', {
             method: 'POST',
             body: JSON.stringify({ codes: codesList, ...commonData })
@@ -572,7 +586,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           await this.request('/api/admin/codes/clear-all', { method: 'DELETE' });
         }
       } catch (err) {}
@@ -593,7 +607,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           await this.request(`/api/admin/codes/${encodeURIComponent(cleanCode)}`, { method: 'DELETE' });
         }
       } catch (err) {}
@@ -614,7 +628,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           return await this.request(`/api/admin/codes/${encodeURIComponent(cleanCode)}`, {
             method: 'PUT',
             body: JSON.stringify({ active })
@@ -660,7 +674,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           return await this.request('/api/admin/submissions');
         }
       } catch (err) {}
@@ -678,7 +692,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           await this.request('/api/admin/submissions', { method: 'DELETE' });
         }
       } catch (err) {}
@@ -716,7 +730,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           return await this.request('/api/admin/levels', {
             method: 'POST',
             body: JSON.stringify(levelData)
@@ -739,7 +753,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           await this.request(`/api/admin/levels/${encodeURIComponent(id)}`, { method: 'DELETE' });
         }
       } catch (err) {}
@@ -759,7 +773,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           await this.request('/api/admin/levels/clear-all', { method: 'DELETE' });
         }
       } catch (err) {}
@@ -837,7 +851,7 @@
       }
 
       // 2. Backend Server Check
-      if (!isFileProtocol) {
+      if (!isStaticHost) {
         try {
           return await this.request('/api/player/join', {
             method: 'POST',
@@ -965,7 +979,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           return await this.request('/api/game/submit', {
             method: 'POST',
             body: JSON.stringify(payload)
@@ -1087,7 +1101,7 @@
       }
 
       try {
-        if (!isFileProtocol) {
+        if (!isStaticHost) {
           const srvLevels = await this.request('/api/game/levels');
           if (srvLevels) levels = srvLevels;
         }
