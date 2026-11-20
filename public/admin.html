@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پانێڵی ئەدمین | hama.flow Admin</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23ef4444'/></svg>">
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <nav class="navbar">
+    <div class="logo-area">
+      <div class="logo-icon" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">👑</div>
+      <div class="logo-text">
+        <h1>پانێڵی بەڕێوەبەر (Admin)</h1>
+        <span>کۆنتڕۆڵی تەواوەتی hama.flow</span>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <a href="index.html" target="_blank" class="btn btn-secondary" title="کردنەوەی پەڕەی یاری">
+        🎮 تاقیکردنەوەی پەڕەی یاری
+      </a>
+      <button id="btnAdminLogout" class="btn btn-danger" style="display: none;">
+        🚪 دەرچوون
+      </button>
+    </div>
+  </nav>
+
+  <div class="admin-container">
+
+    <!-- 1. Admin Login Card (If Not Logged In) -->
+    <section id="adminLoginSection" class="auth-card" style="margin: 40px auto;">
+      <div class="auth-header">
+        <span class="admin-badge">🔐 دەسەڵاتی بەڕێوەبەر</span>
+        <h2>چوونەژوورەوەی ئەدمین</h2>
+        <p>تەنها ئەدمین ڕێگەی پێدراوە بە وشەی نهێنی بچێتە ژوورەوە؛ خەڵکی تر بە کۆدەکان یاری دەکەن.</p>
+      </div>
+
+      <form id="adminLoginForm">
+        <div class="form-group">
+          <label for="adminUsernameInput">ناوی بەکارهێنەر (Username):</label>
+          <input type="text" id="adminUsernameInput" class="form-input" placeholder="adminitit" value="adminitit" required autocomplete="username">
+        </div>
+
+        <div class="form-group">
+          <label for="adminPasswordInput">وشەی نهێنی ئەدمین (Password):</label>
+          <input type="password" id="adminPasswordInput" class="form-input" placeholder="ititadmin1" value="ititadmin1" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" id="btnAdminSubmitLogin" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1rem; margin-top: 10px;">
+          چوونەژوورەوە 🔓
+        </button>
+      </form>
+
+      <div class="auth-notice">
+        🔑 <strong>ناوی بەکارهێنەر:</strong> <code>adminitit</code> &nbsp;|&nbsp; <strong>وشەی نهێنی:</strong> <code>ititadmin1</code>
+      </div>
+    </section>
+
+    <!-- 2. Admin Dashboard & Controls (Visible After Login) -->
+    <section id="adminDashboardSection" style="display: none;">
+
+      <!-- Header Bar -->
+      <div class="admin-header-bar">
+        <div class="admin-title-area">
+          <h2>بەخێربێیت بۆ کۆنتڕۆڵی یاری hama.flow <span class="admin-badge">Admin Active</span></h2>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span id="systemStatusBadge" class="status-badge active" style="font-size: 0.8rem; padding: 6px 12px;">
+            🟢 سیستەم بە تەواوی ئامادەیە
+          </span>
+          <button id="btnRefreshData" class="btn btn-secondary">
+            🔄 نوێکردنەوە
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="admin-tabs">
+        <button class="tab-btn active" data-tab="tab-dashboard">
+          📊 کۆنتڕۆڵ و بارودۆخ
+        </button>
+        <button class="tab-btn" data-tab="tab-codes">
+          🔑 بەڕێوەبردنی کۆدەکان
+        </button>
+        <button class="tab-btn" data-tab="tab-builder">
+          🎨 دروستکردنی یاری نوێ (Builder)
+        </button>
+        <button class="tab-btn" data-tab="tab-submissions">
+          🏆 ئەنجامەکان و کێ یەکەمە؟
+        </button>
+        <button class="tab-btn" data-tab="tab-docs">
+          📖 دۆکمێنت و ڕێبەری تەواو
+        </button>
+      </div>
+
+      <!-- TAB 1: Dashboard & Mode Control -->
+      <div id="tab-dashboard" class="tab-pane active">
+
+        <!-- Stat Cards -->
+        <div class="stats-cards-grid">
+          <div class="stat-card">
+            <div class="stat-icon icon-blue">🔑</div>
+            <div class="stat-content">
+              <h3 id="statTotalCodes">0</h3>
+              <span>کۆی کۆدە دروستکراوەکان</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon icon-green">🟢</div>
+            <div class="stat-content">
+              <h3 id="statActiveCodes">0</h3>
+              <span>کۆدە چالاکەکان</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon icon-yellow">🏆</div>
+            <div class="stat-content">
+              <h3 id="statTotalSubs">0</h3>
+              <span>یاری تەواوکراو لەلایەن یاریزانان</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon icon-purple">🎮</div>
+            <div class="stat-content">
+              <h3 id="statTotalLevels">0</h3>
+              <span>کۆی ئاست و یارییەکان</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mode & Difficulty (Custom Dedicated) -->
+        <div class="panel-card">
+          <h3>🎮 دۆخی یاری بۆ بەکارهێنەران</h3>
+          <p style="color: #c084fc; font-weight: 700; font-size: 0.95rem; margin-bottom: 16px;">
+            🟣 پلاتفۆرمەکە بە تەواوی ئامادەکراوە تەنها بۆ ئەو یارییە تایبەتانەی ئەدمین لە بەشی Builder دروستیان دەکات.
+          </p>
+
+          <form id="gameModeForm">
+            <input type="hidden" name="gameModeRadio" value="custom">
+
+            <div class="form-group">
+              <label for="announcementInput">📢 پەیامی ڕاگەیاندن بۆ سەرەوەی پەڕەی یاریزانان:</label>
+              <input type="text" id="announcementInput" class="form-input" placeholder="وەک: پێشبڕکێی فڵۆو فری دەستیپێکرد! کێ دەتوانێت یەکەم بێت؟">
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+              <input type="checkbox" id="requireFullBoardCheck" style="width: 20px; height: 20px;">
+              <label for="requireFullBoardCheck" style="margin: 0; cursor: pointer;">
+                داواکردنی داپۆشینی ١٠٠٪ی بۆردەکە بۆ بردنەوە (یاسای پێشنیارکراو)
+              </label>
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button type="submit" class="btn btn-primary" style="padding: 10px 24px;">
+                💾 پاشەکەوتکردنی گۆڕانکارییەکان
+              </button>
+              <a href="index.html" target="_blank" class="btn btn-secondary">
+                🔍 بینینی پەڕەی یاری
+              </a>
+            </div>
+          </form>
+        </div>
+
+        <!-- Security / Username & Password change (ONLY in Dashboard & Status) -->
+        <div class="panel-card">
+          <h3>🔒 گۆڕینی ناوی بەکارهێنەر و وشەی نهێنی ئەدمین</h3>
+          <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 14px;">
+            لێرە دەتوانیت ناوی بەکارهێنەر یان وشەی نهێنی نوێ دابنێیت بۆ چوونەژوورەوەی ئەدمین:
+          </p>
+          <form id="changePasswordForm" style="max-width: 440px;">
+            <div class="form-group">
+              <label for="newAdminUsername">ناوی بەکارهێنەری نوێ (Username):</label>
+              <input type="text" id="newAdminUsername" class="form-input" placeholder="adminitit" value="adminitit">
+            </div>
+            <div class="form-group">
+              <label for="newAdminPassword">وشەی نهێنی نوێ (Password):</label>
+              <input type="password" id="newAdminPassword" class="form-input" placeholder="وشەی نهێنی نوێ بنووسە...">
+            </div>
+            <button type="submit" class="btn btn-secondary" style="padding: 10px 20px;">
+              💾 پاشەکەوتکردنی زانیارییە نوێیەکان 🔑
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+      <!-- TAB 2: Access Codes Management -->
+      <div id="tab-codes" class="tab-pane">
+
+        <div class="panel-card">
+          <h3>✨ دروستکردنی کۆدی نوێ بۆ یاریزانان</h3>
+          <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 16px;">
+            کۆدێک دروست بکە و بیدە بە دۆستان، فێرخوازان یان یاریزانەکان بۆ ئەوەی بێ ئەکاونت بچنە ژوورەوە:
+          </p>
+
+          <form id="createCodeForm">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 160px; gap: 12px; align-items: flex-end;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <label for="newCodeText" style="margin-bottom: 0;">کۆد (Code):</label>
+                  <button type="button" id="btnGenRandomCode" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.75rem;">
+                    🎲 دروستکردنی هەڕەمەکی
+                  </button>
+                </div>
+                <input type="text" id="newCodeText" class="form-input code-input" placeholder="وەک: FLOW-2026" required>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="newCodeLabel">ناوی گرووپ / وەسف:</label>
+                <input type="text" id="newCodeLabel" class="form-input" placeholder="وەک: پێشبڕکێی پۆلی یەکەم">
+              </div>
+
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="newCodeMode">ئاستی ڕێگەپێدراو:</label>
+                <select id="newCodeMode" class="form-input">
+                  <option value="custom">🟣 یارییە تایبەتەکانی ئەدمین (Custom)</option>
+                </select>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="height: 48px;">
+                ➕ دروستکردنی کۆد
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+            <h3>📋 لیستی کۆدە چالاکەکان</h3>
+            <input type="text" id="filterCodesInput" class="form-input search-input-box" placeholder="🔍 گەڕان بەپێی کۆد یان ناوی گرووپ...">
+          </div>
+
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>کۆد</th>
+                  <th>وەسف / تێبینی</th>
+                  <th>ئاست</th>
+                  <th>بەکارهێنان</th>
+                  <th>بارودۆخ</th>
+                  <th>کردارەکان</th>
+                </tr>
+              </thead>
+              <tbody id="codesTableBody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 3: Visual Level Builder -->
+      <div id="tab-builder" class="tab-pane">
+
+        <div class="panel-card">
+          <h3>🎨 دروستکردنی یاری نوێ بە سکیلی تایبەت (Custom Flow Free Builder)</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">
+            سکیلی بۆردەکە دیاریبکە (٥×٥ تا ١٠×١٠)، ڕەنگێک هەڵبژێرە، دوو جار کلیک لەسەر دوو چوارگۆشە بکە بۆ دانانی جووتە خاڵ، پاشان پاشەکەوتی بکە!
+          </p>
+
+          <div class="builder-tools">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="builderGridSize">قەبارەی بۆرد (سکیل):</label>
+              <select id="builderGridSize" class="form-input" style="width: 140px;">
+                <option value="5">٥ × ٥ (ئاسان)</option>
+                <option value="6">٦ × ٦ (ئاسان/مامناوەند)</option>
+                <option value="7" selected>٧ × ٧ (مامناوەند)</option>
+                <option value="8">٨ × ٨ (قورس)</option>
+                <option value="9">٩ × ٩ (قورس)</option>
+                <option value="10">١٠ × ١٠ (پسپۆڕ)</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 0.85rem; margin-bottom: 6px; font-weight: 600;">ڕەنگی خاڵ هەڵبژێرە:</label>
+              <div class="color-palette" id="colorPalette">
+                <div class="palette-color selected" data-color="#ef4444" style="background:#ef4444;" title="سوور"></div>
+                <div class="palette-color" data-color="#3b82f6" style="background:#3b82f6;" title="شین"></div>
+                <div class="palette-color" data-color="#10b981" style="background:#10b981;" title="سەوز"></div>
+                <div class="palette-color" data-color="#f59e0b" style="background:#f59e0b;" title="زەرد"></div>
+                <div class="palette-color" data-color="#8b5cf6" style="background:#8b5cf6;" title="مۆر"></div>
+                <div class="palette-color" data-color="#f97316" style="background:#f97316;" title="پرتەقاڵی"></div>
+                <div class="palette-color" data-color="#06b6d4" style="background:#06b6d4;" title="شینی کاڵ"></div>
+                <div class="palette-color" data-color="#ec4899" style="background:#ec4899;" title="پەمەیی"></div>
+                <div class="palette-color" data-color="#ffffff" style="background:#ffffff;" title="سپی"></div>
+                <div class="palette-color" data-color="#84cc16" style="background:#84cc16;" title="فستقی"></div>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="builderLevelName">ناوی یاری:</label>
+              <input type="text" id="builderLevelName" class="form-input" placeholder="وەک: یاری تایبەتی ئەندازیاران">
+            </div>
+
+            <button id="btnClearBuilderGrid" class="btn btn-secondary">
+              پاكکردنەوە 🧹
+            </button>
+          </div>
+
+          <!-- Interactive Grid for Builder -->
+          <div class="builder-grid-container">
+            <div id="builderGrid" class="builder-grid">
+              <!-- Grid cells injected via JS -->
+            </div>
+            <div class="builder-status-tag" id="builderStatusText">
+              خاڵە دانراوەکان: ٠ خاڵ (٠ جووت تەواوە)
+            </div>
+          </div>
+
+          <div style="text-align: center; margin-top: 14px;">
+            <button id="btnSaveCustomLevel" class="btn btn-primary" style="padding: 12px 30px; font-size: 1rem;">
+              💾 پاشەکەوتکردنی ئەم یارییە
+            </button>
+          </div>
+
+        </div>
+
+        <!-- List of Saved Custom Levels -->
+        <div class="panel-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h3>📁 یارییە تایبەتە دروستکراوەکان</h3>
+            <button id="btnClearAllCustomLevels" class="btn btn-danger" style="padding: 4px 10px; font-size: 0.8rem;">
+              🗑️ پاککردنەوەی هەموو یارییە تایبەتەکان
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>ناوی یاری</th>
+                  <th>سکیل</th>
+                  <th>ئاست</th>
+                  <th>ژمارەی جووتە ڕەنگەکان</th>
+                  <th>بەرواری دروستکردن</th>
+                  <th>کردار</th>
+                </tr>
+              </thead>
+              <tbody id="customLevelsTableBody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 4: Leaderboard & Submissions -->
+      <div id="tab-submissions" class="tab-pane">
+
+        <div class="panel-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h3>🏆 لیستی ئەو یاریزانانەی یارییەکانیان تەواو کردووە</h3>
+              <p style="color: var(--text-muted); font-size: 0.88rem;">
+                هەموو ئەو کەسانەی تەواویان کردووە لەگەڵ دیاریکردنی <strong>کێ یەکەم بووە 👑</strong>
+              </p>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button id="btnExportCSV" class="btn btn-secondary" title="داگرتنی ڕاپۆرت وەک ئێکسڵ">
+                📥 داگرتنی Excel/CSV
+              </button>
+              <button id="btnSimulateSubmission" class="btn btn-secondary">
+                🧪 تاقیکردنەوەی ئەنجامێک (تێست)
+              </button>
+              <button id="btnClearSubmissions" class="btn btn-danger">
+                🗑️ سڕینەوەی هەموو تۆمارەکان
+              </button>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <input type="text" id="filterSubmissionsInput" class="form-input search-input-box" placeholder="🔍 گەڕان بەپێی ناوی یاریزان یان کۆد...">
+          </div>
+
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>یاریزان</th>
+                  <th>کۆدی بەکارهاتوو</th>
+                  <th>یاری / ئاست</th>
+                  <th>سکیل</th>
+                  <th>کات</th>
+                  <th>جووڵەکان</th>
+                  <th>داپۆشین</th>
+                  <th>پلە و نیشانەی یەکەم</th>
+                  <th>بەروار و کات</th>
+                </tr>
+              </thead>
+              <tbody id="submissionsTableBody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TAB 5: Documentation -->
+      <div id="tab-docs" class="tab-pane">
+
+        <div class="panel-card">
+          <h3>📖 دۆکمێنت و ڕێبەری تەواوەتی بەکارهێنانی سیستەمەکە</h3>
+          
+          <div class="doc-section">
+            <h4>🔐 سیستەمی چوونەژوورەوەی ئەدمین و بەکارهێنەران</h4>
+            <p>
+              سیستەمەکە بە جۆرێک داڕێژراوە کە تەواوی پارێزراوی و ئاسانکاری فەراهەم بکات:<br>
+              ١. <strong>ئەدمین (Admin):</strong> تەنها ئەدمین لەڕێگەی ناوی بەکارهێنەر (Username) و وشەی نهێنی (Password) دەچێتە ژوورەوە و دەسەڵاتی دەستکاری کردنی هەموو ڕێکخستنەکان، دیاریکردنی ئاستی قورس یان ئاسان، کۆدەکان و دروستکردنی یاری نوێی هەیە.<br>
+              ٢. <strong>یاریزانان (Students / Users / Friends):</strong> پێویست ناکات فۆڕمی درێژ پڕبکەنەوە یان وشەی نهێنی دانێن. تەنها ناوی خۆیان و کۆدێکی ٦-٨ پیتی دەنووسن و دەستبەجێ دەچنە ناو یارییەکە.
+            </p>
+          </div>
+
+          <div class="doc-section">
+            <h4>🎯 چۆنیەتی دیاریکردنی ئاستی ئاسان یان قورس</h4>
+            <p>
+              لە بەشی <strong>کۆنتڕۆڵ و بارودۆخ</strong>، ئەدمین دەتوانێت هەڵبژاردنی گشتی دابنێت کە یاریزان تەنها ئاستی ئاسان ببینێت، یان تەنها مامناوەند، یان تەنها قورس. هەروەها لە کاتی دروستکردنی هەر کۆدێک لە بەشی <strong>کۆدەکان</strong>، دەتوانیت کۆدێک دروست بکەیت کە تەنها تایبەت بێت بە ئاستێکی دیاریکراو!
+            </p>
+          </div>
+
+          <div class="doc-section">
+            <h4>👑 خەڵاتی کەسی یەکەم (First Finisher)</h4>
+            <p>
+              هەرکاتێک کەسێک بۆ یەکەمین جار یارییەک تەواو بکات، سیستەمەکە بەشێوەیەکی ئۆتۆماتیکی نیشانەی <strong>یەکەم بوو 👑</strong> بۆ تەرخان دەکات و لەسەر شاشەی یاریزانەکەش بە تاج و کۆنفێتی زێڕین پێی دەڵێت تۆ یەکەم کەسیت کە ئەمەت تەواو کرد!
+            </p>
+          </div>
+
+          <div class="doc-section">
+            <h4>🛠️ ئامرازی دروستکردنی یاری (Builder)</h4>
+            <p>
+              لە بەشی سێیەم دەتوانیت بۆردی گەورەتر (٨×٨، ٩×٩، ١٠×١٠) دروست بکەیت. تەنها دوو خاڵ لە هەمان ڕەنگ دابنێ لەسەر بۆردەکە، و ئەوەندەی پێت دەکرێت شوێن بۆ ڕەنگەکانی تر بەجێبهێڵە بۆ ئەوەی ڕێگەیان نەبەسترێت.
+            </p>
+          </div>
+
+          <div style="text-align: center; margin-top: 20px;">
+            <a href="docs/guide.html" target="_blank" class="btn btn-primary" style="padding: 10px 24px;">
+              📄 کردنەوەی پەڕەی دۆکمێنتی سەرەکی بۆ چاپکردن
+            </a>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-author">
+        ⚡ لەلایەن <strong class="author-name">hama</strong> دروستکراوە
+      </div>
+      <div class="footer-cta">
+        <span>ئەگەر دەتەوێت فێری دروستکردنی وێبسایت بیت، نامە بنێرە:</span>
+        <a href="https://t.me/IT_Kurd0" target="_blank" rel="noopener noreferrer" class="telegram-badge">
+          <svg class="tg-icon" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+          </svg>
+          <span>تێلیگرام: @IT_Kurd0</span>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/levels.js?v=11"></script>
+  <script src="js/api.js?v=11"></script>
+  <script src="js/admin.js?v=11"></script>
+</body>
+</html>

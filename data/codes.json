@@ -1,0 +1,42 @@
+[
+  {
+    "code": "FLOW2026",
+    "label": "کۆدی سەرەکی گشتی (هەموو ئاستەکان)",
+    "mode": "all",
+    "active": true,
+    "createdAt": "2026-11-20T07:29:23.192Z",
+    "usedCount": 0
+  },
+  {
+    "code": "EASY55",
+    "label": "تەنها ئاستی ئاسان",
+    "mode": "easy",
+    "active": true,
+    "createdAt": "2026-11-20T07:29:23.193Z",
+    "usedCount": 0
+  },
+  {
+    "code": "MED77",
+    "label": "تەنها ئاستی مامناوەند",
+    "mode": "medium",
+    "active": true,
+    "createdAt": "2026-11-20T07:29:23.193Z",
+    "usedCount": 0
+  },
+  {
+    "code": "HARD99",
+    "label": "تەنها ئاستی قورس و پسپۆڕ",
+    "mode": "hard",
+    "active": true,
+    "createdAt": "2026-11-20T07:29:23.193Z",
+    "usedCount": 0
+  },
+  {
+    "code": "CUSTOM77",
+    "label": "تەنها یارییە تایبەتەکانی ئەدمین",
+    "mode": "custom",
+    "active": true,
+    "createdAt": "2026-11-20T07:52:27.276Z",
+    "usedCount": 0
+  }
+]

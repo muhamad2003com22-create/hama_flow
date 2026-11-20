@@ -1,0 +1,18 @@
+{
+  "name": "hama-flow",
+  "version": "1.0.0",
+  "description": "پلاتفۆرمی پێشکەوتووی یاری hama.flow بە زمانی کوردی لەگەڵ پانێڵی ئەدمین و کۆدەکان",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "flow-free",
+    "kurdish",
+    "puzzle-game",
+    "admin-dashboard",
+    "access-codes"
+  ],
+  "author": "",
+  "license": "ISC"
+}

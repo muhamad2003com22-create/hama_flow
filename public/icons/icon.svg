@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0a0e17"/>
+    </radialGradient>
+    <filter id="glowEffect" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded app icon -->
+  <rect width="512" height="512" rx="115" fill="url(#bgGlow)"/>
+  <rect width="504" height="504" x="4" y="4" rx="113" fill="none" stroke="rgba(56, 189, 248, 0.4)" stroke-width="8"/>
+
+  <!-- Grid subtle background -->
+  <path d="M128,64 L128,448 M256,64 L256,448 M384,64 L384,448 M64,128 L448,128 M64,256 L448,256 M64,384 L448,384" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
+
+  <!-- Cyan Pipe Flow -->
+  <path d="M128,128 Q256,128 256,256 T384,384" fill="none" stroke="#38bdf8" stroke-width="42" stroke-linecap="round" stroke-linejoin="round" filter="url(#glowEffect)"/>
+  <path d="M128,128 Q256,128 256,256 T384,384" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Orange Pipe Flow -->
+  <path d="M384,128 Q384,256 256,384 L128,384" fill="none" stroke="#f59e0b" stroke-width="36" stroke-linecap="round" stroke-linejoin="round" filter="url(#glowEffect)"/>
+
+  <!-- Glowing Nodes / Dots -->
+  <!-- Red Dot -->
+  <circle cx="128" cy="128" r="44" fill="#ef4444" filter="url(#glowEffect)"/>
+  <circle cx="128" cy="128" r="22" fill="#ffffff"/>
+
+  <!-- Blue Dot -->
+  <circle cx="384" cy="384" r="44" fill="#38bdf8" filter="url(#glowEffect)"/>
+  <circle cx="384" cy="384" r="22" fill="#ffffff"/>
+
+  <!-- Yellow Dot -->
+  <circle cx="384" cy="128" r="40" fill="#f59e0b" filter="url(#glowEffect)"/>
+  <circle cx="384" cy="128" r="20" fill="#ffffff"/>
+
+  <!-- Green Dot -->
+  <circle cx="128" cy="384" r="40" fill="#10b981" filter="url(#glowEffect)"/>
+  <circle cx="128" cy="384" r="20" fill="#ffffff"/>
+</svg>

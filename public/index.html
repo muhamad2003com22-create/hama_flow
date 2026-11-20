@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>hama.flow | یاری زیرەکی و بەستنەوەی ڕەنگەکان</title>
+  
+  <!-- PWA & Mobile Web App Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0a0e17">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="hama.flow">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Top Navigation Bar -->
+  <nav class="navbar">
+    <div class="logo-area">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-text">
+        <h1>hama.flow</h1>
+        <span>یاری بەستنەوەی ڕەنگەکان</span>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button id="btnInstallApp" class="btn btn-secondary" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.35); color: #34d399; font-size: 0.8rem; padding: 6px 10px;" title="داگرتن وەک ئەپ">
+        📲 دابەزاندن
+      </button>
+      <button id="btnDocsModal" class="btn btn-secondary" title="دۆکمێنت و ڕێنمایی">
+        📖
+      </button>
+      <button id="btnSoundToggle" class="btn btn-secondary btn-icon" title="دەنگ">
+        🔊
+      </button>
+      <a href="admin.html" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.82rem;" title="چوونەژوورەوەی ئەدمین">
+        🔐 ئەدمین
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="main-wrapper">
+
+    <!-- Announcement Banner -->
+    <div id="announcementBanner" class="announcement-banner" style="display: none;">
+      <span>📢</span>
+      <span id="announcementText">بەخێربێن بۆ یاری hama.flow!</span>
+    </div>
+
+    <!-- 1. Player Code Entry Card (Initial State) -->
+    <section id="authSection" class="auth-card">
+      <div class="auth-header">
+        <span class="auth-badge">🎮 چوونەژوورەوەی یاریزان</span>
+        <h2>بەخێربێیت بۆ یاری hama.flow</h2>
+        <p>تەنها ناوی خۆت و کۆدی یاری بنووسە بۆ دەستپێکردن بەبێ پێویستی دروستکردنی ئەکاونت!</p>
+      </div>
+
+      <form id="playerJoinForm">
+        <div class="form-group">
+          <label for="playerNameInput">ناوی یاریزان:</label>
+          <input type="text" id="playerNameInput" class="form-input" placeholder="وەک: ئارام، دڵنیا، هەڵمەت..." required autocomplete="name">
+        </div>
+
+        <div class="form-group">
+          <label for="playerCodeInput">کۆدی چوونەژوورەوە (Game Code):</label>
+          <input type="text" id="playerCodeInput" class="form-input code-input" placeholder="FLOW2026" required autocomplete="off">
+        </div>
+
+        <button type="submit" id="btnJoinGame" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 1rem; margin-top: 10px;">
+          دەستپێکردنی یاری 🚀
+        </button>
+      </form>
+
+      <div class="auth-notice">
+        💡 <strong>کۆدی تاقیکردنەوەی سەرەتا:</strong> دەتوانیت کۆدی <code>FLOW2026</code> بنووسیت بۆ هەموو ئاستەکان یان <code>EASY55</code> بۆ ئاسان. ئەدمین دەتوانێت لە پانێڵی خۆی کۆدی تایبەت دروست بکات!
+      </div>
+    </section>
+
+    <!-- 2. Active Game Interface (Visible when joined) -->
+    <section id="gameSection" class="game-interface" style="display: none;">
+
+      <!-- Compact Player HUD Header -->
+      <div class="player-bar">
+        <div class="player-info">
+          <div class="player-avatar" id="playerAvatar">🎮</div>
+          <div class="player-text-wrap">
+            <div class="player-name-text" id="displayPlayerName">یاریزان</div>
+            <span class="player-code-tag" id="displayPlayerCode">CODE</span>
+          </div>
+        </div>
+        <div class="player-bar-actions">
+          <span class="custom-mode-badge">🟣 یارییە تایبەتەکان</span>
+          <button id="btnLeaveGame" class="btn btn-secondary btn-icon" title="دەرچوون">
+            🚪 دەرچوون
+          </button>
+        </div>
+      </div>
+
+      <!-- Level Pills List -->
+      <div class="levels-scroll" id="levelsPillsContainer">
+        <!-- Injected via JS -->
+      </div>
+
+      <!-- Game Stats Bar -->
+      <div class="game-stats-bar">
+        <div class="stat-box">
+          <div class="stat-label">🔗 بەستراوە</div>
+          <div class="stat-val" id="statFlows">0/0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">📊 داپۆشین</div>
+          <div class="stat-val" id="statCoverage">0%</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">🔄 جووڵە</div>
+          <div class="stat-val" id="statMoves">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">⏱️ کات</div>
+          <div class="stat-val" id="statTimer">00:00</div>
+        </div>
+      </div>
+
+      <!-- Flow Board Canvas Container -->
+      <div class="board-container">
+        <canvas id="gameCanvas"></canvas>
+      </div>
+
+      <!-- Finish / Claim First Place Button -->
+      <div class="claim-win-wrap">
+        <button id="btnClaimWin" class="btn btn-claim-win">
+          🏁 تەواوم کرد! (تۆمارکردنی کات و یەکەم بوون) 👑
+        </button>
+      </div>
+
+      <!-- Action Controls Under Board -->
+      <div class="board-controls">
+        <button id="btnUndo" class="btn btn-secondary">
+          ↩️ پاشگەز
+        </button>
+        <button id="btnReset" class="btn btn-secondary">
+          🔄 سەرلەنوێ
+        </button>
+        <button id="btnNextLevel" class="btn btn-primary">
+          ئاستی دواتر ➡️
+        </button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-author">
+        ⚡ لەلایەن <strong class="author-name">hama</strong> دروستکراوە
+      </div>
+      <div class="footer-cta">
+        <span>ئەگەر دەتەوێت فێری دروستکردنی وێبسایت بیت، نامە بنێرە:</span>
+        <a href="https://t.me/IT_Kurd0" target="_blank" rel="noopener noreferrer" class="telegram-badge">
+          <svg class="tg-icon" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+          </svg>
+          <span>تێلیگرام: @IT_Kurd0</span>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 3. Victory Celebration Modal -->
+  <div id="victoryModal" class="modal-overlay">
+    <div class="modal-content victory-card">
+      
+      <!-- Special badge if First finisher -->
+      <div id="firstPlaceBanner" class="first-badge-banner" style="display: none;">
+        👑 ئافەرم! تۆ یەکەم کەسیت کە ئەم یارییەت تەواو کرد! 👑
+      </div>
+
+      <div class="victory-trophy">🏆</div>
+      <h2 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 6px;">پیرۆزە! سەرکەوتووانە تەواوت کرد</h2>
+      <p style="color: var(--text-muted); font-size: 0.95rem;" id="victorySubtitle">
+        تۆ تەواوی بۆردەکەت پڕکردەوە و هەموو ڕەنگەکانت بەستەوە!
+      </p>
+
+      <div class="victory-stats">
+        <div>
+          <div class="stat-label">پلەی تەواوکردن</div>
+          <div class="stat-val" id="victoryRank" style="color: #38bdf8;">#1</div>
+        </div>
+        <div>
+          <div class="stat-label">کاتی تۆمارکراو</div>
+          <div class="stat-val" id="victoryTime" style="color: #10b981;">00:00</div>
+        </div>
+        <div>
+          <div class="stat-label">کۆی جووڵەکان</div>
+          <div class="stat-val" id="victoryMoves" style="color: #f59e0b;">0</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+        <button id="btnVictoryNext" class="btn btn-primary" style="padding: 12px 24px;">
+          ئاستی دواتر 🚀
+        </button>
+        <button id="btnVictoryClose" class="btn btn-secondary" style="padding: 12px 18px;">
+          داخستن
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 4. Documentation / Guide Modal -->
+  <div id="docsModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>📖 دۆکمێنت و ڕێنمایی یاری فڵۆو فری</h3>
+        <button id="btnDocsClose" class="modal-close">&times;</button>
+      </div>
+
+      <div class="doc-section">
+        <h4>🎯 فڵۆو فری (Flow Free) چییە؟</h4>
+        <p>
+          فڵۆو فری یەکێکە لە ناوازەترین یارییە فیکری و زیرەکییەکان لە جیهاندا. ئامانجی یارییەکە بریتییە لە بەستنەوەی هەموو ئەو خاڵە ڕەنگاوڕەنگانەی کە هاوشێوەی یەکن، بەجۆرێک کە هێڵی بۆرییەکان بە تەواوی ڕووبەری بۆردەکە داپۆشن بەبێ ئەوەی بەسەر یەکدا ببڕن.
+        </p>
+      </div>
+
+      <div class="doc-section">
+        <h4>⚖️ یاسا سەرەکییەکانی یاری</h4>
+        <div class="rule-card">
+          <strong>١. بەستنەوەی جووتە ڕەنگەکان:</strong> هەموو دوو خاڵی هاوڕەنگ دەبێت بە یەک هێڵ بەسترێنەوە (وەک: سوور بە سوور، شین بە شین).
+        </div>
+        <div class="rule-card">
+          <strong>٢. نەبڕینی هێڵەکان:</strong> نابێت هیچ بۆرییەک بەسەر بۆرییەکی تردا بپەڕێتەوە یان بیبڕێت؛ گەر هێڵێک بەسەر یەکێکی تردا ببەیت، هێڵە کۆنەکە دەبڕێت!
+        </div>
+        <div class="rule-card">
+          <strong>٣. داپۆشینی تەواوی بۆرد (%١٠٠):</strong> بۆ سەرکەوتن لە یارییەکە، پێویستە ١٠٠٪ی چوارگۆشەکانی سەر بۆردەکە بە بۆرییەکان پڕبکرێنەوە.
+        </div>
+      </div>
+
+      <div class="doc-section">
+        <h4>📊 بەش و ئاستەکانی یاری</h4>
+        <ul>
+          <li><strong>ئاستی ئاسان (Easy - ٥×٥ و ٦×٦):</strong> بۆ دەستپێک و فێربوون زۆر گونجاوە، ژمارەی ڕەنگەکان کەمن (٣ بۆ ٥ ڕەنگ).</li>
+          <li><strong>ئاستی مامناوەند (Medium - ٦×٦، ٧×٧ و ٨×٨):</strong> ئاستێکی گونجاو بە ڕەنگی زیاتر (٥ بۆ ٦ ڕەنگ) و پێویستی بە تێڕامان هەیە.</li>
+          <li><strong>ئاستی قورس و پسپۆڕ (Hard - ٨×٨، ٩×٩ و ١٠×١٠):</strong> سکیل و ڕووبەری گەورە لەگەڵ ژمارەیەکی زۆر لە ڕەنگەکان، تەحەدایەکی فیکری گەورەیە!</li>
+        </ul>
+      </div>
+
+      <div class="doc-section">
+        <h4>🔑 چۆنیەتی چوونەژوورەوەی یاریزانان و ئەدمین</h4>
+        <p>
+          • <strong>یاریزانان (خەڵکی):</strong> پێویست بە دروستکردنی هیچ ئەکاونتێک ناکات! تەنها بە ناوی خۆیان و ئەو کۆدەی کە ئەدمین پێیان دەدات (وەک FLOW2026) دەچنە ژوورەوە.<br>
+          • <strong>ئەدمین (Admin):</strong> تەنها ئەدمین دەتوانێت لەڕێگەی وشەی نهێنیەوە Login بێت بۆ کۆنتڕۆڵکردنی ئاستەکان، دروستکردنی کۆدی نوێ، دیاریکردنی یاری تایبەت، و بینینی ئەنجامەکان کە کێ یەکەم بووە!
+        </p>
+      </div>
+
+      <div class="doc-section">
+        <h4>💡 ئامۆژگاری بۆ بردنەوە لە یارییە قورسەکان</h4>
+        <ul>
+          <li>هەمیشە سەرەتا لە خاڵەکانی لێوار و گۆشەکانی بۆردەکەوە دەستپێبکە.</li>
+          <li>هێڵە درێژەکان بە تەنیشت دیواری بۆردەکەدا ببە بۆ ئەوەی ڕێگەی ناوەڕاست کراوە بمێنێتەوە.</li>
+          <li>گەر هێڵێکت هەڵە کێشا، دوگمەی <strong>پاشگەزبوونەوە (Undo)</strong> بەکاربهێنە.</li>
+        </ul>
+      </div>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <button id="btnDocsCloseBottom" class="btn btn-primary" style="padding: 10px 24px;">
+          تێگەیشتم و دەستپێدەکەم 👍
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Mobile Install App Modal -->
+  <div id="installAppModal" class="modal-overlay">
+    <div class="modal-content" style="text-align: center;">
+      <div style="font-size: 3rem; margin-bottom: 10px;">📲</div>
+      <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 8px;">دابەزاندنی وەک ئەپی مۆبایل</h3>
+      <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.7; margin-bottom: 16px;">
+        دەتوانیت یاری hama.flow وەک ئەپڵیکەیشنێکی سەربەخۆ دابەزێنیتە سەر شاشەی مۆبایلەکەت بۆ ئەوەی بە یەک کلیک و بێ وێبگەڕ یاری بکەیت!
+      </p>
+
+      <div id="androidInstallBox" style="margin-bottom: 12px;">
+        <button id="btnTriggerInstallPrompt" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1rem;">
+          📥 دابەزاندن و دامەزراندن (Install)
+        </button>
+      </div>
+
+      <div id="iosInstallBox" style="display: none; background: rgba(255,255,255,0.05); padding: 14px; border-radius: var(--radius-sm); text-align: right; font-size: 0.85rem; line-height: 1.8; border: 1px solid var(--border-color);">
+        <strong style="color: #38bdf8;">ڕێنمایی بۆ ئایفۆن (iPhone / Safari):</strong><br>
+        ١. لە خوارەوەی سەفاری کلیک لەسەر دوگمەی <strong>Share (📤)</strong> بکە.<br>
+        ٢. وەرە خوارەوە و کلیک لەسەر <strong>Add to Home Screen ➕</strong> بکە.<br>
+        ٣. لە سەرەوە کلیک لەسەر <strong>Add</strong> بکە و ڕاستەوخۆ دەبێتە ئەپ لەسەر مۆبایلەکەت!
+      </div>
+
+      <button id="btnCloseInstallModal" class="btn btn-secondary" style="margin-top: 14px; width: 100%;">
+        داخستن
+      </button>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/levels.js?v=10"></script>
+  <script src="js/api.js?v=10"></script>
+  <script src="js/game.js?v=10"></script>
+  <script>
+    // Main App Logic
+    let gameInstance = null;
+    let confettiInstance = null;
+    let allLevels = { easy: [], medium: [], hard: [], custom: [] };
+    let currentCategory = 'custom';
+    let currentLevelIndex = 0;
+    let activePlayer = null;
+    let requireFullBoard = true;
+
+    // Elements
+    const authSection = document.getElementById('authSection');
+    const gameSection = document.getElementById('gameSection');
+    const playerJoinForm = document.getElementById('playerJoinForm');
+    const playerNameInput = document.getElementById('playerNameInput');
+    const playerCodeInput = document.getElementById('playerCodeInput');
+    const displayPlayerName = document.getElementById('displayPlayerName');
+    const displayPlayerCode = document.getElementById('displayPlayerCode');
+    const playerAvatar = document.getElementById('playerAvatar');
+    const btnLeaveGame = document.getElementById('btnLeaveGame');
+
+    const levelsPillsContainer = document.getElementById('levelsPillsContainer');
+
+    const statFlows = document.getElementById('statFlows');
+    const statCoverage = document.getElementById('statCoverage');
+    const statMoves = document.getElementById('statMoves');
+    const statTimer = document.getElementById('statTimer');
+
+    const btnUndo = document.getElementById('btnUndo');
+    const btnReset = document.getElementById('btnReset');
+    const btnNextLevel = document.getElementById('btnNextLevel');
+    const btnSoundToggle = document.getElementById('btnSoundToggle');
+
+    // Modals
+    const victoryModal = document.getElementById('victoryModal');
+    const victoryRank = document.getElementById('victoryRank');
+    const victoryTime = document.getElementById('victoryTime');
+    const victoryMoves = document.getElementById('victoryMoves');
+    const firstPlaceBanner = document.getElementById('firstPlaceBanner');
+    const btnVictoryNext = document.getElementById('btnVictoryNext');
+    const btnVictoryClose = document.getElementById('btnVictoryClose');
+
+    const docsModal = document.getElementById('docsModal');
+    const btnDocsModal = document.getElementById('btnDocsModal');
+    const btnDocsClose = document.getElementById('btnDocsClose');
+    const btnDocsCloseBottom = document.getElementById('btnDocsCloseBottom');
+
+    // Announcement
+    const announcementBanner = document.getElementById('announcementBanner');
+    const announcementText = document.getElementById('announcementText');
+
+    // Initialize Game Engine
+    const canvas = document.getElementById('gameCanvas');
+    const confettiCanvas = document.getElementById('confettiCanvas');
+    confettiInstance = new ConfettiFX(confettiCanvas);
+
+    gameInstance = new FlowFreeGame(canvas, {
+      requireFullBoard: true,
+      onStatsChange: (stats) => {
+        statFlows.textContent = `${stats.connected}/${stats.totalFlows}`;
+        statCoverage.textContent = `${stats.coverage}%`;
+        statMoves.textContent = stats.moves;
+        statTimer.textContent = formatTime(stats.timeSeconds);
+      },
+      onWin: async (data) => {
+        confettiInstance.burst(110);
+        showVictoryModal(data);
+      }
+    });
+
+    // Auto-resize canvas on screen resize & orientation change
+    window.addEventListener('resize', () => {
+      if (gameInstance && gameInstance.level) {
+        gameInstance.resizeCanvas();
+      }
+    });
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        if (gameInstance && gameInstance.level) {
+          gameInstance.resizeCanvas();
+        }
+      }, 150);
+    });
+    if (window.ResizeObserver) {
+      const bContainer = document.querySelector('.board-container');
+      if (bContainer) {
+        const ro = new ResizeObserver(() => {
+          if (gameInstance && gameInstance.level) {
+            gameInstance.resizeCanvas();
+          }
+        });
+        ro.observe(bContainer);
+      }
+    }
+
+    // Sound toggle
+    let isSoundOn = true;
+    btnSoundToggle.addEventListener('click', () => {
+      isSoundOn = !isSoundOn;
+      gameInstance.sound.enabled = isSoundOn;
+      btnSoundToggle.textContent = isSoundOn ? '🔊' : '🔇';
+      showToast(isSoundOn ? 'دەنگ چالاککرا' : 'دەنگ بێدەنگکرا');
+    });
+
+    // Docs Modal
+    btnDocsModal.addEventListener('click', () => docsModal.classList.add('show'));
+    btnDocsClose.addEventListener('click', () => docsModal.classList.remove('show'));
+    btnDocsCloseBottom.addEventListener('click', () => docsModal.classList.remove('show'));
+
+    // Check saved player session
+    const savedPlayer = localStorage.getItem('flow_player');
+    if (savedPlayer) {
+      try {
+        const p = JSON.parse(savedPlayer);
+        playerNameInput.value = p.name || '';
+        playerCodeInput.value = p.code || '';
+      } catch (e) {}
+    }
+
+    // Handle Player Join
+    playerJoinForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = playerNameInput.value.trim();
+      const code = playerCodeInput.value.trim().toUpperCase();
+
+      if (!name || !code) {
+        showToast('تکایە هەموو خانەکان پڕبکەرەوە');
+        return;
+      }
+
+      try {
+        const res = await API.playerJoin(name, code);
+        activePlayer = { name, code };
+        localStorage.setItem('flow_player', JSON.stringify(activePlayer));
+
+        requireFullBoard = res.requireFullBoard !== false;
+        gameInstance.options.requireFullBoard = requireFullBoard;
+
+        if (res.announcement) {
+          announcementText.textContent = res.announcement;
+          announcementBanner.style.display = 'flex';
+        }
+
+        // Apply levels
+        allLevels = res.levels || { easy: [], medium: [], hard: [], custom: [] };
+
+        // Setup Player UI
+        displayPlayerName.textContent = name;
+        displayPlayerCode.textContent = code;
+        playerAvatar.textContent = name.charAt(0) || '🎮';
+
+        authSection.style.display = 'none';
+        gameSection.style.display = 'flex';
+
+        // Set custom mode for admin levels
+        setDifficulty('custom');
+        setTimeout(() => {
+          if (gameInstance) gameInstance.resizeCanvas();
+        }, 50);
+
+        showToast(`بەخێربێیت ${name}! با دەستپێبکەین`);
+      } catch (err) {
+        showToast(err.message || 'نەتوانرا بچیتە ژوورەوە');
+      }
+    });
+
+    // Leave Game
+    btnLeaveGame.addEventListener('click', () => {
+      if (confirm('دڵنیایت لە دەرچوون لە یاری؟')) {
+        gameSection.style.display = 'none';
+        authSection.style.display = 'block';
+        gameInstance.resetTimer();
+      }
+    });
+
+    function setDifficulty(diff) {
+      currentCategory = 'custom';
+      renderLevelPills();
+      loadLevelByIndex(0);
+    }
+
+    function renderLevelPills() {
+      levelsPillsContainer.innerHTML = '';
+      const list = allLevels[currentCategory] || [];
+      if (list.length === 0) {
+        if (currentCategory === 'custom') {
+          levelsPillsContainer.innerHTML = '<div style="color:#c084fc; font-size:0.88rem; padding:8px 16px; background:rgba(168,85,247,0.1); border-radius:14px; border:1px solid rgba(168,85,247,0.3); width:100%; text-align:center;">✨ هێشتا هیچ یارییەک لەم بەشە نییە تا ئەدمین لە بەشی Builder زیادی دەکات!</div>';
+        } else {
+          levelsPillsContainer.innerHTML = '<span style="color:var(--text-muted); font-size:0.85rem; padding:8px;">هیچ یارییەک لەم ئاستەدا نییە</span>';
+        }
+        return;
+      }
+      list.forEach((lvl, idx) => {
+        const pill = document.createElement('button');
+        pill.className = `level-pill ${idx === currentLevelIndex ? 'active' : ''}`;
+        pill.textContent = lvl.name || `ئاستی ${idx + 1}`;
+        pill.addEventListener('click', () => {
+          loadLevelByIndex(idx);
+        });
+        levelsPillsContainer.appendChild(pill);
+      });
+    }
+
+    function loadLevelByIndex(idx) {
+      const list = allLevels[currentCategory] || [];
+      if (!list[idx]) {
+        if (currentCategory === 'custom' && list.length === 0) {
+          const ctx = canvas.getContext('2d');
+          const dpr = window.devicePixelRatio || 1;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#060913';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.font = `${14 * dpr}px 'Vazirmatn', sans-serif`;
+          ctx.fillStyle = '#c084fc';
+          ctx.textAlign = 'center';
+          ctx.fillText('چاوەڕوانی دانانی یاری لە ئەدمین...', canvas.width / 2, canvas.height / 2);
+        }
+        return;
+      }
+      currentLevelIndex = idx;
+
+      // Update active pill
+      const pills = levelsPillsContainer.querySelectorAll('.level-pill');
+      pills.forEach((p, i) => p.classList.toggle('active', i === idx));
+
+      gameInstance.loadLevel(list[idx]);
+    }
+
+    // Board Controls
+    btnUndo.addEventListener('click', () => gameInstance.undo());
+    btnReset.addEventListener('click', () => {
+      if (confirm('دڵنیایت لە سەرلەنوێ دەستپێکردنەوەی ئەم ئاستە؟')) {
+        gameInstance.resetLevel();
+      }
+    });
+
+    btnNextLevel.addEventListener('click', () => {
+      const list = allLevels[currentCategory] || [];
+      if (currentLevelIndex < list.length - 1) {
+        loadLevelByIndex(currentLevelIndex + 1);
+      } else {
+        showToast('هەموو یارییەکانی ئەم ئاستەت تەواو کرد! ئاستێکی تر هەڵبژێرە');
+      }
+    });
+
+    // Claim Victory / Finish Button
+    const btnClaimWin = document.getElementById('btnClaimWin');
+    if (btnClaimWin) {
+      btnClaimWin.addEventListener('click', async () => {
+        const stats = gameInstance.getStats();
+
+        // Stop timer & mark victory
+        gameInstance.hasWon = true;
+        if (gameInstance.timerInterval) clearInterval(gameInstance.timerInterval);
+        gameInstance.sound.playWin();
+        confettiInstance.burst(120);
+
+        const list = allLevels[currentCategory] || [];
+        const lvl = gameInstance.level || list[currentLevelIndex] || {
+          id: 'custom-' + Date.now(),
+          name: 'یاری ئەدمین',
+          size: gameInstance.size || 7,
+          difficulty: 'custom'
+        };
+
+        await showVictoryModal({
+          level: lvl,
+          moves: stats.moves,
+          timeSeconds: stats.timeSeconds,
+          coverage: stats.coverage
+        });
+      });
+    }
+
+    // Victory Handling
+    async function showVictoryModal(winData) {
+      const lvl = winData.level;
+      const timeSec = winData.timeSeconds;
+      const moves = winData.moves;
+
+      victoryTime.textContent = formatTime(timeSec);
+      victoryMoves.textContent = moves;
+
+      // Send submission to server
+      try {
+        const payload = {
+          playerName: activePlayer ? activePlayer.name : 'یاریزان',
+          codeUsed: activePlayer ? activePlayer.code : 'FLOW2026',
+          levelId: lvl.id,
+          levelName: lvl.name,
+          difficulty: lvl.difficulty || currentCategory,
+          gridSize: lvl.size,
+          moves: moves,
+          timeSeconds: timeSec,
+          pipeCoverage: winData.coverage
+        };
+
+        const res = await API.submitGame(payload);
+
+        if (res.isFirst) {
+          firstPlaceBanner.style.display = 'block';
+          if (res.rank === 1) {
+            firstPlaceBanner.innerHTML = '👑 پیرۆزە! تۆ یەکەم بوویت (خێراترین کات)! 👑';
+          } else {
+            firstPlaceBanner.innerHTML = '👑 پیرۆزە! تۆ یەکەم کەسیت کە ئەم یارییەت تەواو کرد! 👑';
+          }
+          victoryRank.textContent = '#1 یەکەم!';
+        } else {
+          firstPlaceBanner.style.display = 'none';
+          victoryRank.textContent = `#${res.rank || 1}`;
+        }
+      } catch (e) {
+        console.error('Error submitting victory:', e);
+        victoryRank.textContent = '#1';
+        firstPlaceBanner.style.display = 'none';
+      }
+
+      victoryModal.classList.add('show');
+    }
+
+    btnVictoryClose.addEventListener('click', () => victoryModal.classList.remove('show'));
+    btnVictoryNext.addEventListener('click', () => {
+      victoryModal.classList.remove('show');
+      const list = allLevels[currentCategory] || [];
+      if (currentLevelIndex < list.length - 1) {
+        loadLevelByIndex(currentLevelIndex + 1);
+      } else {
+        showToast('پیرۆزە! هەموو ئەم بەشەت تەواو کرد');
+      }
+    });
+
+    // Auto-fetch levels on startup if guest
+    API.getLevels().then(lvls => {
+      allLevels = lvls;
+    }).catch(console.warn);
+
+    // PWA Service Worker Registration & Mobile Install
+    let deferredPrompt = null;
+    const btnInstallApp = document.getElementById('btnInstallApp');
+    const installAppModal = document.getElementById('installAppModal');
+    const btnTriggerInstallPrompt = document.getElementById('btnTriggerInstallPrompt');
+    const btnCloseInstallModal = document.getElementById('btnCloseInstallModal');
+    const androidInstallBox = document.getElementById('androidInstallBox');
+    const iosInstallBox = document.getElementById('iosInstallBox');
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(console.warn);
+      });
+    }
+
+    // Capture install prompt (Chrome / Android / Edge)
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
+
+    if (btnInstallApp) {
+      btnInstallApp.addEventListener('click', () => {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIOS) {
+          androidInstallBox.style.display = 'none';
+          iosInstallBox.style.display = 'block';
+          installAppModal.classList.add('show');
+        } else if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              showToast('ئەپڵیکەیشن بە سەرکەوتوویی دابەزێنرا!');
+            }
+            deferredPrompt = null;
+          });
+        } else {
+          androidInstallBox.style.display = 'block';
+          iosInstallBox.style.display = 'none';
+          installAppModal.classList.add('show');
+        }
+      });
+    }
+
+    if (btnTriggerInstallPrompt) {
+      btnTriggerInstallPrompt.addEventListener('click', () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(() => {
+            deferredPrompt = null;
+            installAppModal.classList.remove('show');
+          });
+        } else {
+          showToast('لە مینیۆی وێبگەڕەکەت (٣ خاڵەکە) کلیک لەسەر Install App یان Add to Home screen بکە');
+          installAppModal.classList.remove('show');
+        }
+      });
+    }
+
+    if (btnCloseInstallModal) {
+      btnCloseInstallModal.addEventListener('click', () => {
+        installAppModal.classList.remove('show');
+      });
+    }
+  </script>
+</body>
+</html>
