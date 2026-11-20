@@ -343,8 +343,18 @@
 
 @media (max-width: 600px) {
   .navbar {
-    padding: 8px 12px;
-    height: 54px;
+    padding: 0 14px;
+    padding-right: max(14px, env(safe-area-inset-right));
+    padding-left: max(14px, env(safe-area-inset-left));
+    height: 52px;
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow: hidden;
   }
   .admin-subtitle {
     display: none !important;
@@ -353,8 +363,16 @@
     display: none !important;
   }
   .navbar .btn {
-    padding: 6px 10px;
-    font-size: 0.82rem;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    max-width: 34px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.95rem !important;
   }
   .admin-container {
     padding: 0 10px;
